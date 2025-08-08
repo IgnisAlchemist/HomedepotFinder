@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Buscador de Tiendas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-image: url('THD_Fondo3.jpg');
+            background-size: cover; /* Ajusta la imagen para que cubra todo el fondo */
+            background-position: center; /* Centra la imagen */
+            background-repeat: no-repeat; /* Evita que la imagen se repita */
+            background-attachment: fixed; /* Mantiene la imagen fija al hacer scroll */
+            background-color: #f4f4f4;
+        }
+
+        .image-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .image-container img {
+            max-width: 350px;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* --- ESTILOS DE NAVEGACIÓN (PESTAÑAS) --- */
+        nav {
+            margin-bottom: 30px;
+            background-color: #e2e6ea; /* Un fondo suave para la barra de navegación */
+            padding: 10px 0;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex; /* Para que los enlaces se pongan en línea */
+            justify-content: center; /* Centrar los enlaces */
+        }
+        nav a {
+            text-decoration: none;
+            color: #007bff; /* Color del texto del enlace */
+            padding: 10px 20px;
+            margin: 0 5px; /* Espacio entre los enlaces */
+            border-radius: 5px;
+            transition: background-color 0.3s ease; /* Transición suave al pasar el ratón */
+            font-weight: bold;
+        }
+        nav a:hover {
+            background-color: #ff894591; /* Color de fondo al pasar el ratón */
+        }
+        nav a.active { /* Estilo para la pestaña activa/seleccionada */
+            background-color: #EE7125;
+            color: white;
+        }
+        /* --- FIN ESTILOS DE NAVEGACIÓN --- */
+
+
+        .search-container {
+            display: flex;
+            align-items: flex-start; /* Alinea los ítems al inicio del eje cruzado (arriba) */
+            justify-content: center; /* Centra los elementos horizontalmente */
+            margin-bottom: 30px;
+        }
+
+        .input-wrapper {
+            position: relative; /* Importante para el posicionamiento de las sugerencias */
+        }
+
+        .search-container input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 300px; /* Ancho del input */
+            font-size: 16px;
+        }
+        .search-container button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-left: 5px; /* Margen a la izquierda del botón */
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            height: 40px; /* Aproximadamente la altura del input con padding */
+            line-height: 1.5; /* Ajusta si el texto del botón no se centra verticalmente */
+            box-sizing: border-box; /* Incluir padding y borde en la altura */
+        }
+        .search-container button:hover {
+            background-color: #0056b3;
+        }
+        #results-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* --- ESTILOS PARA EL SCROLL HORIZONTAL DE LA TABLA --- */
+        .table-wrapper {
+            overflow-x: auto; /* ¡Esta es la propiedad clave! */
+            max-width: 100%;    /* Asegura que no se desborde del contenedor padre */
+            -webkit-overflow-scrolling: touch; /* Mejora el scroll en dispositivos táctiles */
+        }
+        table {
+            width: 100%; /* La tabla ocupará el 100% del wrapper */
+            min-width: 800px; /* Opcional: Establece un ancho mínimo para que las columnas no se compriman demasiado antes del scroll */
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden; /* Esto ayuda a que los bordes redondeados se vean bien */
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px; /* Ajustado para un poco más de espacio */
+            text-align: left;
+            white-space: nowrap; /* Evita que el texto de las celdas se rompa en varias líneas */
+            font-size: 18px;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            color: #333;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #EE7125;
+            color: #ffffff;
+        }
+        .no-results {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        /* --- Estilos ESPECÍFICOS para las SUGERENCIAS de búsqueda --- */
+        #suggestions-container {
+            position: absolute; /* Para que flote sobre el contenido */
+            top: 100%; /* Justo debajo del input */
+            left: 0;
+            width: 100%; /* El 100% del ancho de su padre (input-wrapper) */
+            max-height: 180px; /* Para que sea scrollable si hay muchas */
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 1000; /* Asegura que esté por encima de otros elementos */
+            display: none; /* Ocultar por defecto */
+            border-radius: 0 0 5px 5px; /* Bordes redondeados solo abajo */
+        }
+
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            overflow: hidden;
+            text-overflow: clip;
+            white-space: nowrap;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
+
+                /* --- ESTILOS PARA LA NUEVA FUNCIONALIDAD DE COPIADO --- */
+        .copy-feedback {
+            position: absolute;
+            background-color: #007bff; /* Color azul para el mensaje */
+            color: white; /* Color del texto */
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            left: 75%; /* Mueve el punto de inicio al centro de la celda */
+            transform: translateY(-120%) translateX(-50%); /* Ajusta verticalmente y luego mueve a la izquierda la mitad de su ancho */
+            white-space: nowrap;
+            white-space: nowrap;
+            z-index: 10;
+        }
+        .copy-feedback.show {
+            opacity: 1;
+        }
+
+        /* --- INICIO DEL CAMBIO: ESTILOS PARA TRUNCAR LA COLUMNA DE ENLACE --- */
+        .table-wrapper td:last-child {
+            max-width: 300px;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="image-container">
+        <img src="THD_logo.jpg" alt="Logo de la empresa">
+    </div>
+
+    <nav>
+        <a href="Index.html">Index</a>
+        <a href="Tiendas Homedepot.html"  class="active">Tiendas Homedepot</a>
+        <a href="PCs Homedepot.html">PCs Homedepot</a>
+        <a href="POs Homedepot.html">POS Homedepot</a>
+    </nav>
+    <div class="search-container">
+        <form id="search-form" style="display: flex; align-items: flex-start;">
+            <div class="input-wrapper">
+                <input type="text" id="search-input" placeholder="Buscar Tienda..." name="q" autocomplete="off">
+                <div id="suggestions-container"></div>
+            </div>
+            <button type="submit">Buscar</button>
+        </form>
+    </div>
+
+    <div id="results-container">
+        <div class="table-wrapper">
+            </div>
+    </div>
+
+
+<script>
+    const storesData = [
+        
+            { Tienda: "1123", NombreDeTienda: "Polanco", Tipo: "Tienda", Telefono: "5525810900", IpTienda: "10.245.216.124", Municipio: "Null", Cp: "Null", Estado: "Polanco", Distrito: "DF", Tks: "Null" },
+{ Tienda: "1137", NombreDeTienda: "El Refugio", Tipo: "Tienda", Telefono: "4422623600", IpTienda: "10.245.72.124", Municipio: "Null", Cp: "Null", Estado: "Null", Distrito: "Null", Tks: "Null" },
+{ Tienda: "1161", NombreDeTienda: "San Luis Potosi East", Tipo: "Tienda", Telefono: "4448267800", IpTienda: "10.244.176.124", Municipio: "San Luis Potosi  San Luis Potosi", Cp: "78399", Estado: "San Luis Potosi East", Distrito: "Bajío", Tks: "TKS-1609-0271" },
+{ Tienda: "1162", NombreDeTienda: "Delicias", Tipo: "Tienda", Telefono: "6391390800", IpTienda: "10.244.184.124", Municipio: "Delicias  Chihuahua", Cp: "33106", Estado: "Delicias", Distrito: "Frontera", Tks: "Null" },
+{ Tienda: "1163", NombreDeTienda: "Aguascalientes Sur", Tipo: "Tienda", Telefono: "4491760700", IpTienda: "10.244.224.22", Municipio: "Villasuncion Aguascalientes", Cp: "20280", Estado: "Aguascalientes Sur", Distrito: "Bajío", Tks: "TKS-1708-0054" },
+{ Tienda: "1164", NombreDeTienda: "Juitepec", Tipo: "Tienda", Telefono: "7775165200", IpTienda: "10.244.232.124", Municipio: "Jiutepec  Morelos", Cp: "62579", Estado: "Juitepec", Distrito: "Pacifico Sur", Tks: "TKS-1709-0111" },
+{ Tienda: "1165", NombreDeTienda: "Nezahualcoyotl", Tipo: "Tienda", Telefono: "5524813100", IpTienda: "10.245.88.124", Municipio: "Estado De México", Cp: "57000", Estado: "Nezahualcoyotl", Distrito: "DF", Tks: "Null" },
+{ Tienda: "1166", NombreDeTienda: "Juriquilla", Tipo: "Tienda", Telefono: "4424285300", IpTienda: "10.244.240.124", Municipio: "Del. Santa Rosa Jáuregui  Municipio De Querétaro  Qro.", Cp: "76230", Estado: "Juriquilla", Distrito: "Pacifico Sur", Tks: "Null" },
+{ Tienda: "1167", NombreDeTienda: "Atizapan", Tipo: "Tienda", Telefono: "5523450300", IpTienda: "10.244.160.124", Municipio: "Atizapán De Zaragoza  Estado De México", Cp: "52930", Estado: "Atizapan", Distrito: "Edo mexico", Tks: "Null" },
+{ Tienda: "1168", NombreDeTienda: "Tijuana Soler", Tipo: "Tienda", Telefono: "6646351600", IpTienda: "10.244.248.124", Municipio: "Tijuana  Baja California", Cp: "22530", Estado: "Tijuana Soler", Distrito: "Baja norte", Tks: "TKS-1810-0220" },
+{ Tienda: "1169", NombreDeTienda: "Lincoln", Tipo: "Tienda", Telefono: "8181212300", IpTienda: "10.245.96.124", Municipio: "Garcia Nuevo Leon", Cp: "66203", Estado: "Lincoln", Distrito: "Norte", Tks: "Null" },
+{ Tienda: "1170", NombreDeTienda: "Corregidora", Tipo: "Tienda", Telefono: "4422097300", IpTienda: "10.245.128.124", Municipio: "Municipio De Corregidora  Querétaro Cp 76904", Cp: "76904", Estado: "Corregidora", Distrito: "Pacifico Sur", Tks: "Null" },
+{ Tienda: "1174", NombreDeTienda: "Chihuahua Norte", Tipo: "Tienda", Telefono: "6141586800", IpTienda: "10.245.152.124", Municipio: "Null", Cp: "Null", Estado: "Chihuahua Norte", Distrito: "Frontera", Tks: "Null" },
+{ Tienda: "1175", NombreDeTienda: "Gonzalitos", Tipo: "Tienda", Telefono: "8117342500", IpTienda: "10.245.160.124", Municipio: "Monterrey N.L", Cp: "64630", Estado: "Gonzalitos", Distrito: "Norte", Tks: "Null" },
+{ Tienda: "1176", NombreDeTienda: "Santa Anita", Tipo: "Tienda", Telefono: "3332836600", IpTienda: "10.245.120.124", Municipio: "Tlajomulco De Zúñiga  Guadalajara  Jalisco", Cp: "45640", Estado: "Santa Anita", Distrito: "Occidente", Tks: "Null" },
+{ Tienda: "1177", NombreDeTienda: "Atitalaquia", Tipo: "HUB", Telefono: "7713602708", IpTienda: "10.246.172.122", Municipio: "Null", Cp: "Null", Estado: "Hidalgo", Distrito: "HUB", Tks: "Null" },
+{ Tienda: "1179", NombreDeTienda: "Tijuana", Tipo: "HUB", Telefono: "6646356900", IpTienda: "10.245.104.124", Municipio: "Tijuana  Baja California", Cp: "22245", Estado: "Hub Tijuana", Distrito: "HUB", Tks: "Null" },
+{ Tienda: "1180", NombreDeTienda: "Ciénega", Tipo: "MDC", Telefono: "8180460000", IpTienda: "10.243.248.124", Municipio: "Ciénega De Flores N.L.", Cp: "65550", Estado: "Hub Cienega", Distrito: "HUB", Tks: "Null" },
+{ Tienda: "1312", NombreDeTienda: "Guadalajara", Tipo: "LSC", Telefono: "2214343434", IpTienda: "10.245.136.136", Municipio: "Chapala - Guadalajara 9999, San José del Quince, El Quince, Jal.", Cp: "45672", Estado: "Guadalajara", Distrito: "Centros Logisticos", Tks: "Null" },
+{ Tienda: "1314", NombreDeTienda: "Puebla", Tipo: "LSC", Telefono: "2214343434", IpTienda: "10.245.176.124", Municipio: "Huejotzingo  Puebla", Cp: "74160", Estado: "Lsc Puebla", Distrito: "Centros Logisticos", Tks: "Null" },
+{ Tienda: "1315", NombreDeTienda: "Culiacan", Tipo: "LSC", Telefono: "6678463400", IpTienda: "10.245.144.124", Municipio: "Culiacan  Sinaloa", Cp: "80140", Estado: "Lsc Culiacan", Distrito: "Centros Logisticos", Tks: "Null" },
+{ Tienda: "1316", NombreDeTienda: "Dark Store", Tipo: "Dark Store", Telefono: "5519403200", IpTienda: "10.245.208.124", Municipio: "Null", Cp: "Null", Estado: "Null", Distrito: "Null", Tks: "Null" },
+{ Tienda: "1317", NombreDeTienda: "Queretaro", Tipo: "LSC", Telefono: "4422569600", IpTienda: "10.245.168.124", Municipio: "Colon  Queretaro", Cp: "Null", Estado: "Lsc Queretaro", Distrito: "Centros Logisticos", Tks: "Null" },
+{ Tienda: "1318", NombreDeTienda: "Monterrey", Tipo: "LSC", Telefono: "8135515300", IpTienda: "10.245.184.124", Municipio: "Escobedo  Nuevo Leon", Cp: "66054", Estado: "Lsc Monterrey", Distrito: "Centros Logisticos", Tks: "Null" },
+{ Tienda: "1319", NombreDeTienda: "Estado De Mexico", Tipo: "LSC", Telefono: "5519403200", IpTienda: "10.245.192.124", Municipio: "Tlalnepantla  Edo. De Mexico", Cp: "Null", Estado: "Lsc Estado De Mexico", Distrito: "Centros Logisticos", Tks: "Null" },
+{ Tienda: "1323", NombreDeTienda: "Puerto Morelos", Tipo: "LSC", Telefono: "9988729500", IpTienda: "10.245.200.124", Municipio: "Puerto Morelos  Quintana Roo", Cp: "77508", Estado: "Lsc Puerto Morelos", Distrito: "Centros Logisticos", Tks: "Null" },
+{ Tienda: "1325", NombreDeTienda: "Mexicali", Tipo: "Tienda", Telefono: "6865516300", IpTienda: "10.245.48.124", Municipio: "Null", Cp: "Null", Estado: "San Pedro Mexicali", Distrito: "Null", Tks: "Null" },
+{ Tienda: "1327", NombreDeTienda: "Gomez Palacios", Tipo: "Tienda", Telefono: "8711753600", IpTienda: "10.245.124.60", Municipio: "Gomez Palacios  Durango", Cp: "350000", Estado: "Gomez Palacios", Distrito: "Frontera", Tks: "Null" },
+{ Tienda: "1328", NombreDeTienda: "Lazaro Cardenas", Tipo: "Tienda", Telefono: "3331623500", IpTienda: "10.245.232.124", Municipio: "Null", Cp: "Null", Estado: "Lazaro Cardenas", Distrito: "Occidente", Tks: "Null" },
+{ Tienda: "1331", NombreDeTienda: "Cancun Sur", Tipo: "Tienda", Telefono: "9988814900", IpTienda: "10.245.240.124", Municipio: "Null", Cp: "Null", Estado: "Cancun Sur", Distrito: "Golfo", Tks: "Null" },
+{ Tienda: "1333", NombreDeTienda: "Concordia", Tipo: "Tienda", Telefono: "8111561600", IpTienda: "10.245.8.124", Municipio: "Cd Apodaca  N.L", Cp: "66609", Estado: "Concordia", Distrito: "Norte", Tks: "Null" },
+{ Tienda: "1335", NombreDeTienda: "Hermosillo Morelos", Tipo: "Tienda", Telefono: "6621094500", IpTienda: "10.245.56.124", Municipio: "Null", Cp: "Null", Estado: "Hermosillo Morelos", Distrito: "Null", Tks: "Null" },
+{ Tienda: "1337", NombreDeTienda: "Tijuana", Tipo: "LSC", Telefono: "6646554500", IpTienda: "10.245.24.124", Municipio: "Null", Cp: "22675", Estado: "LSC Tijuana", Distrito: "Centros Logisticos", Tks: "Null" },
+{ Tienda: "1342", NombreDeTienda: "Mirasur", Tipo: "Tienda", Telefono: "8181542300", IpTienda: "10.245.40.124", Municipio: "Null", Cp: "Null", Estado: "Mirasur", Distrito: "Norte", Tks: "Null" },
+{ Tienda: "8061", NombreDeTienda: "Mty (Ciénega De Flores)", Tipo: "MDC", Telefono: "8180460000", IpTienda: "10.243.248.50", Municipio: "Ciénega De Flores  Nuevo Leon", Cp: "65550", Estado: "Mdc Monterrey", Distrito: "Centros Logisticos", Tks: "TKS-0903-0009" },
+{ Tienda: "8082", NombreDeTienda: "Rosarito", Tipo: "Tienda", Telefono: "6616148100", IpTienda: "10.244.168.124", Municipio: "Playas De Rosarito  Baja Calif", Cp: "22710", Estado: "Rosarito", Distrito: "Baja norte", Tks: "Telnor" },
+{ Tienda: "8085", NombreDeTienda: "Coatzacoalc", Tipo: "Tienda", Telefono: "9212110600", IpTienda: "10.244.192.124", Municipio: "Coatzacoalcos  Veracruz", Cp: "95538", Estado: "Coatzacoalcos", Distrito: "Golfo", Tks: "TKS-0708-0412" },
+{ Tienda: "8086", NombreDeTienda: "Toluca Centro", Tipo: "Tienda", Telefono: "7222360700", IpTienda: "10.244.200.124", Municipio: "Toluca  Estado De México", Cp: "50016", Estado: "Toluca Sur", Distrito: "Edo mexico", Tks: "TKS 0804-0211" },
+{ Tienda: "8088", NombreDeTienda: "Queretaro I", Tipo: "Tienda", Telefono: "4423093600", IpTienda: "10.244.216.124", Municipio: "Queretaro  Queretaro", Cp: "76099", Estado: "Queretaro Sur", Distrito: "Pacifico Sur", Tks: "TKS-0711-0389" },
+{ Tienda: "8094", NombreDeTienda: "Sendero", Tipo: "Tienda", Telefono: "8181320500", IpTienda: "10.245.32.124", Municipio: "General Escobedo", Cp: "66059", Estado: "Sendero", Distrito: "Norte", Tks: "TKS-0805-0016" },
+{ Tienda: "8626", NombreDeTienda: "Tlaxcala", Tipo: "Tienda", Telefono: "2464656000", IpTienda: "10.247.96.124", Municipio: "Tlaxcala", Cp: "90610", Estado: "Tlaxcala", Distrito: "Centro", Tks: "TKS -1103-0289" },
+{ Tienda: "8628", NombreDeTienda: "La Paz", Tipo: "Tienda", Telefono: "6121750600", IpTienda: "10.247.32.124", Municipio: "La Paz", Cp: "23090", Estado: "La Paz", Distrito: "Pacífico Norte", Tks: "TKS-0908-0452" },
+{ Tienda: "8635", NombreDeTienda: "Puebla Iii", Tipo: "Tienda", Telefono: "2222137600", IpTienda: "10.247.40.21", Municipio: "Puebla  Puebla", Cp: "72303", Estado: "Puebla Iii", Distrito: "Centro", Tks: "TKS-1003-0564" },
+{ Tienda: "8636", NombreDeTienda: "Tlaquepaque", Tipo: "Tienda", Telefono: "3338377800", IpTienda: "10.247.56.124", Municipio: "Tlaquepaque  Jalisco", Cp: "45500", Estado: "Tlaquepaque", Distrito: "Occidente", Tks: "TKS- 1008- 0226" },
+{ Tienda: "8637", NombreDeTienda: "Ecatepec", Tipo: "Tienda", Telefono: "5541170800", IpTienda: "10.247.72.124", Municipio: "Ecatepec  Edo. Mexico", Cp: "55090", Estado: "Ecatepec", Distrito: "Edo mexico", Tks: "TKS-1009-0147" },
+{ Tienda: "8638", NombreDeTienda: "Piedras Negras", Tipo: "Tienda", Telefono: "8787842100", IpTienda: "10.247.80.124", Municipio: "Piedras Negras  Coahuila", Cp: "26000", Estado: "Piedra Negras", Distrito: "Noreste", Tks: "TKS-1009-0410" },
+{ Tienda: "8639", NombreDeTienda: "Puebla Periferico", Tipo: "Tienda", Telefono: "2226230000", IpTienda: "10.247.88.124", Municipio: "Puebla  Puebla", Cp: "72400", Estado: "Puebla Iv", Distrito: "Centro", Tks: "TKS-1009-0412" },
+{ Tienda: "8642", NombreDeTienda: "Uruapan", Tipo: "Tienda", Telefono: "4525034200", IpTienda: "10.247.104.124", Municipio: "Uruapan  Michoacan", Cp: "60126", Estado: "Uruapan", Distrito: "Bajío", Tks: "TKS-1105-0170" },
+{ Tienda: "8643", NombreDeTienda: "Circunvalacion", Tipo: "Tienda", Telefono: "3338830900", IpTienda: "10.247.112.124", Municipio: "Guadalajara  Jalisco", Cp: "44700", Estado: "Circunvalacion", Distrito: "Occidente", Tks: "Null" },
+{ Tienda: "8644", NombreDeTienda: "Matamoros", Tipo: "Tienda", Telefono: "8688110600", IpTienda: "10.247.120.124", Municipio: "Matamoros", Cp: "87390", Estado: "Matamoros", Distrito: "Noreste", Tks: "TKS-1105-0170" },
+{ Tienda: "8645", NombreDeTienda: "Tecamac", Tipo: "Tienda", Telefono: "5559388000", IpTienda: "10.247.128.124", Municipio: "Estado De Mexico", Cp: "5700", Estado: "Tecamac", Distrito: "Edo mexico", Tks: "Null" },
+{ Tienda: "8646", NombreDeTienda: "Cuautla", Tipo: "Tienda", Telefono: "7353989600", IpTienda: "10.247.136.124", Municipio: "Cuautla  Morelos", Cp: "62757", Estado: "Cuautla", Distrito: "Pacifico Sur", Tks: "Null" },
+{ Tienda: "8647", NombreDeTienda: "Aragon", Tipo: "Tienda", Telefono: "5541171400", IpTienda: "10.247.160.124", Municipio: "Ecatepec De Morelos  Edo De Mexico", Cp: "55140", Estado: "Aragon", Distrito: "Edo mexico", Tks: "TKS-1206-0477" },
+{ Tienda: "8648", NombreDeTienda: "Los Reyes", Tipo: "Tienda", Telefono: "5526197800", IpTienda: "10.247.152.124", Municipio: "Los Reyes La Paz  Edo Mexico", Cp: "56490", Estado: "Los Reyes", Distrito: "DF", Tks: "TKS-1206-0089" },
+{ Tienda: "8649", NombreDeTienda: "San Juan Del Rio", Tipo: "Tienda", Telefono: "4272682300", IpTienda: "10.247.168.124", Municipio: "San Juan Del Rio  Queretaro", Cp: "76800", Estado: "San Juan Del Rio", Distrito: "Pacifico Sur", Tks: "Null" },
+{ Tienda: "8651", NombreDeTienda: "Nogales", Tipo: "Tienda", Telefono: "6313116900", IpTienda: "10.247.184.124", Municipio: "Nogales  Sonora", Cp: "87065", Estado: "Nogales", Distrito: "Baja norte", Tks: "TKS-1208-0299" },
+{ Tienda: "8652", NombreDeTienda: "Fundadores", Tipo: "Tienda", Telefono: "8112230200", IpTienda: "10.247.192.124", Municipio: "San Pedro Garza Garcia  Nl", Cp: "66269", Estado: "Fundadores", Distrito: "Norte", Tks: "TKS-1209-0113" },
+{ Tienda: "8653", NombreDeTienda: "Monclova", Tipo: "Tienda", Telefono: "8661580500", IpTienda: "10.247.176.124", Municipio: "Moncolva  Coahuila", Cp: "25718", Estado: "Monclova", Distrito: "Noreste", Tks: "TKS-1208-0158" },
+{ Tienda: "8654", NombreDeTienda: "Guaymas", Tipo: "Tienda", Telefono: "6222250900", IpTienda: "10.247.200.124", Municipio: "Guaymas  Sonora", Cp: "85456", Estado: "Guaymas", Distrito: "Baja norte", Tks: "TKS-1208-0302" },
+{ Tienda: "8656", NombreDeTienda: "Zamora", Tipo: "Tienda", Telefono: "3515303000", IpTienda: "10.247.208.124", Municipio: "Jacona  Michoacán", Cp: "59813", Estado: "Zamora", Distrito: "Bajío", Tks: "TKS-1209-0124" },
+{ Tienda: "8657", NombreDeTienda: "Manzanillo", Tipo: "Tienda", Telefono: "3143313900", IpTienda: "10.247.216.124", Municipio: "Manzanillo  Colima", Cp: "28869", Estado: "Manzanillo", Distrito: "Occidente", Tks: "Null" },
+{ Tienda: "8658", NombreDeTienda: "Cordoba", Tipo: "Tienda", Telefono: "2717172100", IpTienda: "10.247.224.22", Municipio: "Cordoba  Veracruz", Cp: "94575", Estado: "Cordoba", Distrito: "Centro", Tks: "TKS-1209-0119" },
+{ Tienda: "8659", NombreDeTienda: "Independencia", Tipo: "Tienda", Telefono: "3338371600", IpTienda: "10.247.240.124", Municipio: "Guadalajara  Jalisco", Cp: "44250", Estado: "Independencia", Distrito: "Occidente", Tks: "TKS-1306-0327" },
+{ Tienda: "8661", NombreDeTienda: "Santa Fe", Tipo: "Tienda", Telefono: "5550812100", IpTienda: "10.247.248.124", Municipio: "México  D. F.", Cp: "1210", Estado: "Santa Fe", Distrito: "DF", Tks: "Null" },
+{ Tienda: "8662", NombreDeTienda: "Tepic", Tipo: "Tienda", Telefono: "3111296400", IpTienda: "10.247.232.124", Municipio: "Tepic   Nayarit", Cp: "63176", Estado: "Tepic", Distrito: "DF", Tks: "TKS-1305-0782" },
+{ Tienda: "8663", NombreDeTienda: "Campeche", Tipo: "Tienda", Telefono: "9818181500", IpTienda: "10.244.16.124", Municipio: "Campeche  Campeche", Cp: "24028", Estado: "Campeche", Distrito: "Golfo", Tks: "Null" },
+{ Tienda: "8664", NombreDeTienda: "Tres Rios", Tipo: "Tienda", Telefono: "6677594700", IpTienda: "10.244.8.124", Municipio: "Culiacan  Sinaloa", Cp: "80028", Estado: "Tres Rios", Distrito: "Pacífico Norte", Tks: "Null" },
+{ Tienda: "8672", NombreDeTienda: "Morelia Este", Tipo: "Tienda", Telefono: "4431477400", IpTienda: "10.244.24.124", Municipio: "Morelia Michoacan", Cp: "58255", Estado: "Morelia Este", Distrito: "Bajío", Tks: "Null" },
+{ Tienda: "8673", NombreDeTienda: "Playa Del Carmen", Tipo: "Tienda", Telefono: "9848715800", IpTienda: "10.244.32.124", Municipio: "Playa Del Carmen", Cp: "77712", Estado: "Playa Del Carmen", Distrito: "Golfo", Tks: "Null" },
+{ Tienda: "8674", NombreDeTienda: "Oaxaca", Tipo: "Tienda", Telefono: "9515018600", IpTienda: "10.244.40.124", Municipio: "Oaxaca De Juarez  Oaxaca", Cp: "68130", Estado: "Oaxaca", Distrito: "Pacifico Sur", Tks: "Null" },
+{ Tienda: "8675", NombreDeTienda: "Chetumal", Tipo: "Tienda", Telefono: "9832677700", IpTienda: "10.244.48.124", Municipio: "Chetumal  Quintana Roo", Cp: "77020", Estado: "Chetumal", Distrito: "Golfo", Tks: "Null" },
+{ Tienda: "8676", NombreDeTienda: "Carretera Nacional", Tipo: "Tienda", Telefono: "8112240600", IpTienda: "10.244.64.124", Municipio: "Monterrey  Nuevo León  México", Cp: "64989", Estado: "La Rioja", Distrito: "Norte", Tks: "Null" },
+{ Tienda: "8677", NombreDeTienda: "Zacatecas", Tipo: "Tienda", Telefono: "4924916200", IpTienda: "10.244.56.124", Municipio: "Guadalupe  Zacatecas", Cp: "98610", Estado: "Zacatecas", Distrito: "Bajío", Tks: "Null" },
+{ Tienda: "8679", NombreDeTienda: "Perinorte", Tipo: "HUB", Telefono: "5558618460", IpTienda: "10.244.72.124", Municipio: "Cuautitlan Izcalli  Edo. De Mexico", Cp: "54769", Estado: "Hub Perinorte", Distrito: "HUB", Tks: "Null" },
+{ Tienda: "8681", NombreDeTienda: "Iztapalapa", Tipo: "HUB", Telefono: "5557168990", IpTienda: "10.244.80.124", Municipio: "Delegación Iztapalapa  México  Df.", Cp: "9219", Estado: "Hub Iztapalapa", Distrito: "HUB", Tks: "Null" },
+{ Tienda: "8682", NombreDeTienda: "Guasave", Tipo: "Tienda", Telefono: "6877219000", IpTienda: "10.244.128.124", Municipio: "Guasave Sinaloa", Cp: "81000", Estado: "Guasave", Distrito: "Pacífico Norte", Tks: "Null" },
+{ Tienda: "8691", NombreDeTienda: "Coyoacan", Tipo: "Tienda", Telefono: "5553380900", IpTienda: "10.244.112.124", Municipio: "Coyoacán  Mexico", Cp: "4330", Estado: "Coyoacan", Distrito: "DF", Tks: "Null" },
+{ Tienda: "8692", NombreDeTienda: "Linda Vista", Tipo: "Tienda", Telefono: "5557478600", IpTienda: "10.244.208.124", Municipio: "Distrito Federal  Distrito Federal", Cp: "77760", Estado: "Linda Vista", Distrito: "DF", Tks: "Null" },
+{ Tienda: "8693", NombreDeTienda: "Cd Del Carmen", Tipo: "Tienda", Telefono: "9381313600", IpTienda: "10.244.120.124", Municipio: "Cd Del Carmen Campeche", Cp: "24119", Estado: "Cd Del Carmen", Distrito: "Golfo", Tks: "Null" },
+{ Tienda: "8694", NombreDeTienda: "Salamanca", Tipo: "Tienda", Telefono: "4646418500", IpTienda: "10.244.88.124", Municipio: "Salamanca  Guanajuato", Cp: "36720", Estado: "Salamanca", Distrito: "Bajío", Tks: "TKS-1500286" },
+{ Tienda: "8696", NombreDeTienda: "Merida Citadela", Tipo: "Tienda", Telefono: "9999643200", IpTienda: "10.244.104.124", Municipio: "Merida  Yucatan", Cp: "97227", Estado: "Merida Citadela", Distrito: "Golfo", Tks: "Null" },
+{ Tienda: "8698", NombreDeTienda: "Tehuacan", Tipo: "Tienda", Telefono: "2383803050", IpTienda: "10.244.96.124", Municipio: "Tehuacan  Puebla", Cp: "75701", Estado: "Tehuacan", Distrito: "Centro", Tks: "Null" },
+{ Tienda: "8700", NombreDeTienda: "Oat", Tipo: "OAT", Telefono: "8181557000", IpTienda: "10.21.32.124", Municipio: "San Pedro Garza Garcia  Nl", Cp: "66267", Estado: "Oat", Distrito: "Null", Tks: "TKS-1112-0471" },
+{ Tienda: "8701", NombreDeTienda: "Torres", Tipo: "Tienda", Telefono: "8183284800", IpTienda: "10.248.16.124", Municipio: "Monterrey  Nuevo Leon", Cp: "64790", Estado: "Las Torres", Distrito: "Norte", Tks: "TKS-0302-0118" },
+{ Tienda: "8702", NombreDeTienda: "Coapa Calzada Del Hueso", Tipo: "Tienda", Telefono: "5556241400", IpTienda: "10.248.24.124", Municipio: "Coyoacan  Distrito Federal", Cp: "4870", Estado: "Coapa", Distrito: "DF", Tks: "TKS-15780" },
+{ Tienda: "8703", NombreDeTienda: "Revolucion", Tipo: "Tienda", Telefono: "8183694400", IpTienda: "10.248.32.124", Municipio: "Monterrey  Nuevo Leon", Cp: "64830", Estado: "Revolucion", Distrito: "Norte", Tks: "TKS-9801-0218" },
+{ Tienda: "8704", NombreDeTienda: "Cumbres", Tipo: "Tienda", Telefono: "8181588000", IpTienda: "10.248.40.124", Municipio: "Monterrey  Nuevo Leon", Cp: "64610", Estado: "Cumbres", Distrito: "Norte", Tks: "TKS-9810-0280" },
+{ Tienda: "8705", NombreDeTienda: "Mexicali", Tipo: "Tienda", Telefono: "6869068000", IpTienda: "10.248.48.124", Municipio: "Mexicali  Baja Calif. Norte", Cp: "21370", Estado: "Mexicali", Distrito: "Baja norte", Tks: "Telnor" },
+{ Tienda: "8706", NombreDeTienda: "Tijuana", Tipo: "Tienda", Telefono: "6646088000", IpTienda: "10.248.56.124", Municipio: "Tijuana  Baja Calif. Norte", Cp: "22430", Estado: "Tijuana", Distrito: "Baja norte", Tks: "Telnor" },
+{ Tienda: "8707", NombreDeTienda: "San Luis", Tipo: "Tienda", Telefono: "4448343800", IpTienda: "10.248.64.124", Municipio: "San Luis Potosi  San Luis Poto", Cp: "78299", Estado: "San Luis Potosi", Distrito: "Bajío", Tks: "TKS-0211-0779" },
+{ Tienda: "8708", NombreDeTienda: "Culiacan", Tipo: "Tienda", Telefono: "6677588000", IpTienda: "10.248.72.124", Municipio: "Culiacan  Sinaloa", Cp: "80110", Estado: "Culiacan", Distrito: "Pacífico Norte", Tks: "TKS-0209-0612" },
+{ Tienda: "8710", NombreDeTienda: "Nogalar", Tipo: "Tienda", Telefono: "8183054800", IpTienda: "10.248.88.124", Municipio: "Monterrey  Nuevo Leon", Cp: "66452", Estado: "Nogalar", Distrito: "Norte", Tks: "TKS-0301-0494" },
+{ Tienda: "8713", NombreDeTienda: "Henequen", Tipo: "Tienda", Telefono: "6566374700", IpTienda: "10.248.112.124", Municipio: "Cd. Juarez  Chihuahua", Cp: "32690", Estado: "Henequen", Distrito: "Frontera", Tks: "TKS-0302-0564" },
+{ Tienda: "8714", NombreDeTienda: "Lopez Mateo", Tipo: "Tienda", Telefono: "6566861000", IpTienda: "10.248.120.124", Municipio: "Cd. Juarez  Chihuahua", Cp: "32380", Estado: "Lopez Mateos", Distrito: "Frontera", Tks: "TKS-0302-0583" },
+{ Tienda: "8716", NombreDeTienda: "Leon", Tipo: "Tienda", Telefono: "4777885800", IpTienda: "10.248.136.124", Municipio: "Leon  Guanajuato", Cp: "37150", Estado: "Leon", Distrito: "Bajío", Tks: "TKS-0302-0105" },
+{ Tienda: "8719", NombreDeTienda: "Chihuahua", Tipo: "Tienda", Telefono: "6144398200", IpTienda: "10.248.160.124", Municipio: "Chihuahua  Chihuahua", Cp: "31216", Estado: "Chihuahua", Distrito: "frontera", Tks: "TKS-0302-0413" },
+{ Tienda: "8720", NombreDeTienda: "Hermosillo", Tipo: "Tienda", Telefono: "6622598500", IpTienda: "10.248.168.124", Municipio: "Hermosillo  Sonora", Cp: "83280", Estado: "Hermosillo", Distrito: "Baja norte", Tks: "TKS-0300440" },
+{ Tienda: "8723", NombreDeTienda: "Juarez-Tecn", Tipo: "Tienda", Telefono: "6562270000", IpTienda: "10.248.192.124", Municipio: "Cd. Juarez  Chihuahua", Cp: "32618", Estado: "Tecnologico", Distrito: "Frontera", Tks: "TKS-0408-0251" },
+{ Tienda: "8724", NombreDeTienda: "Tlalnepantl", Tipo: "Tienda", Telefono: "5519401800", IpTienda: "10.248.200.124", Municipio: "Tlalnepantla  Edo. De Mexico", Cp: "54040", Estado: "Tlanepantla", Distrito: "Edo mexico", Tks: "TKS-0309-0341" },
+{ Tienda: "8725", NombreDeTienda: "Naucalpan", Tipo: "Tienda", Telefono: "5521227400", IpTienda: "10.248.208.124", Municipio: "Naucalpan De Juarez  Edo. De M", Cp: "53569", Estado: "Naucalpan", Distrito: "Edo mexico", Tks: "TKS-0401-0334" },
+{ Tienda: "8726", NombreDeTienda: "Cuernavaca", Tipo: "Tienda", Telefono: "7771010700", IpTienda: "10.248.216.124", Municipio: "Cuernavaca  Morelos", Cp: "62240", Estado: "Cuernavaca", Distrito: "Pacifico Sur", Tks: "TKS-0411-0906" },
+{ Tienda: "8727", NombreDeTienda: "Guadalajara", Tipo: "Tienda", Telefono: "3338848000", IpTienda: "10.248.244.124", Municipio: "Tlaquepaque  Jalisco", Cp: "45530", Estado: "Guadalajara", Distrito: "Occidente", Tks: "TKS-0603-0720" },
+{ Tienda: "8728", NombreDeTienda: "Torreon", Tipo: "Tienda", Telefono: "8717474500", IpTienda: "10.248.232.124", Municipio: "Torreon  Coahuila", Cp: "27020", Estado: "Torreon", Distrito: "Frontera", Tks: "TKS-0402-0839" },
+{ Tienda: "8729", NombreDeTienda: "Saltillo", Tipo: "Tienda", Telefono: "8444385400", IpTienda: "10.248.240.124", Municipio: "Saltillo  Coahuila", Cp: "25279", Estado: "Saltillo", Distrito: "Noreste", Tks: "TKS-0401-0694" },
+{ Tienda: "8730", NombreDeTienda: "Tampico", Tipo: "Tienda", Telefono: "8332302800", IpTienda: "10.248.248.124", Municipio: "Tampico  Tamaulipas", Cp: "89360", Estado: "Tampico", Distrito: "Noreste", Tks: "TKS-0401-0689" },
+{ Tienda: "8733", NombreDeTienda: "Durango", Tipo: "Tienda", Telefono: "6188272200", IpTienda: "10.248.36.124", Municipio: "Durango  Durango", Cp: "34170", Estado: "Durango", Distrito: "Frontera", Tks: "TKS-0410-0045" },
+{ Tienda: "8734", NombreDeTienda: "Reynosa", Tipo: "Tienda", Telefono: "8999092000", IpTienda: "10.248.44.124", Municipio: "Reynosa  Tamaulipas", Cp: "88710", Estado: "Reynosa", Distrito: "Noreste", Tks: "TKS-0501-0666" },
+{ Tienda: "8735", NombreDeTienda: "Puebla", Tipo: "Tienda", Telefono: "2223038800", IpTienda: "10.248.52.124", Municipio: "Puebla  Puebla", Cp: "72400", Estado: "Puebla I", Distrito: "Centro", Tks: "TKS-0503-0384" },
+{ Tienda: "8736", NombreDeTienda: "Acapulco", Tipo: "Tienda", Telefono: "7444691600", IpTienda: "10.248.60.124", Municipio: "Acapulco  Guerrero", Cp: "39350", Estado: "Acapulco", Distrito: "Pacifico Sur", Tks: "TKS-0503-0370" },
+{ Tienda: "8738", NombreDeTienda: "Queretaro", Tipo: "Tienda", Telefono: "4421927000", IpTienda: "10.248.76.124", Municipio: "Queretaro  Queretaro", Cp: "76130", Estado: "Queretaro", Distrito: "Pacifico Sur", Tks: "TKS-0505-0117" },
+{ Tienda: "8739", NombreDeTienda: "Villahermos", Tipo: "Tienda", Telefono: "9933136900", IpTienda: "10.248.84.124", Municipio: "Villahermosa  Tabasco", Cp: "86100", Estado: "Villahermosa", Distrito: "Golfo", Tks: "TKS-0503-0385" },
+{ Tienda: "8740", NombreDeTienda: "León Centro", Tipo: "Tienda", Telefono: "4777100100", IpTienda: "10.248.92.124", Municipio: "Leon  Guanajuato", Cp: "37530", Estado: "Leon (Centro Max)", Distrito: "Bajío", Tks: "TKS-0505-0115" },
+{ Tienda: "8741", NombreDeTienda: "Morelia", Tipo: "Tienda", Telefono: "4433224500", IpTienda: "10.248.100.124", Municipio: "Morelia  Michoacan", Cp: "58080", Estado: "Morelia", Distrito: "Bajío", Tks: "TKS-0505-0116" },
+{ Tienda: "8742", NombreDeTienda: "Coordillera", Tipo: "Tienda", Telefono: "3310020200", IpTienda: "10.248.108.124", Municipio: "Zapopan  Jalisco", Cp: "45045", Estado: "Guadalajara Ii", Distrito: "Occidente", Tks: "TKS-0505-0114" },
+{ Tienda: "8743", NombreDeTienda: "Merida", Tipo: "Tienda", Telefono: "9999420500", IpTienda: "10.248.116.124", Municipio: "Merida  Yucatan", Cp: "97118", Estado: "Merida", Distrito: "Golfo", Tks: "TKS-0503-0383" },
+{ Tienda: "8744", NombreDeTienda: "Coapa Miramontes", Tipo: "Tienda", Telefono: "5554833900", IpTienda: "10.248.124.124", Municipio: "Distrito Federal  Distrito Fed", Cp: "4920", Estado: "Coapa 2", Distrito: "DF", Tks: "TKS-0501-0822" },
+{ Tienda: "8745", NombreDeTienda: "Lomas Verde", Tipo: "Tienda", Telefono: "5553710400", IpTienda: "10.248.132.124", Municipio: "Naucalpan De Juarez  Edo. De M", Cp: "53150", Estado: "Lomas Verdes", Distrito: "Edo mexico", Tks: "TKS-0410-0497" },
+{ Tienda: "8746", NombreDeTienda: "San Jerónim", Tipo: "Tienda", Telefono: "5553770900", IpTienda: "10.248.140.124", Municipio: "Distrito Federal  Distrito Fed", Cp: "1090", Estado: "San Jeronimo", Distrito: "DF", Tks: "TKS-0502-0508" },
+{ Tienda: "8747", NombreDeTienda: "Iztapalapa", Tipo: "Tienda", Telefono: "5558041200", IpTienda: "10.248.148.124", Municipio: "Distrito Federal  Distrito Fed", Cp: "9219", Estado: "Iztapalapa", Distrito: "DF", Tks: "TKS-0501-0621" },
+{ Tienda: "8748", NombreDeTienda: "Mixcoac", Tipo: "Tienda", Telefono: "5552780800", IpTienda: "10.248.156.124", Municipio: "Distrito Federal  Distrito Fed", Cp: "1460", Estado: "Mixcoac", Distrito: "DF", Tks: "TKS-0501-0678" },
+{ Tienda: "8751", NombreDeTienda: "Guadalupe", Tipo: "Tienda", Telefono: "8181272000", IpTienda: "10.248.180.124", Municipio: "Guadalupe  Nuevo Leon", Cp: "67150", Estado: "Eloy Cavazos", Distrito: "Norte", Tks: "TKS-0700286" },
+{ Tienda: "8752", NombreDeTienda: "Santa Catarina", Tipo: "Tienda", Telefono: "8181240600", IpTienda: "10.248.188.124", Municipio: "Santa Catarina N. L.", Cp: "66100", Estado: "Santa Catarina", Distrito: "Norte", Tks: "TKS-0905-0218" },
+{ Tienda: "8754", NombreDeTienda: "Tapachula", Tipo: "Tienda", Telefono: "9626201900", IpTienda: "10.248.204.124", Municipio: "Tapachula  Chiapas", Cp: "30700", Estado: "Tapachula", Distrito: "Pacifico Sur", Tks: "TKS-0711-0219" },
+{ Tienda: "8757", NombreDeTienda: "Cd Victoria", Tipo: "Tienda", Telefono: "8341070000", IpTienda: "10.248.248.124", Municipio: "Cd. Victoria  Tamaulipas", Cp: "87027", Estado: "Cd Victoria", Distrito: "Noreste", Tks: "TKS-0701-0109" },
+{ Tienda: "8759", NombreDeTienda: "Obregon", Tipo: "Tienda", Telefono: "6444109300", IpTienda: "10.248.244.124", Municipio: "Cd. Obregon  Sonora", Cp: "85010", Estado: "Obregon", Distrito: "Pacífico Norte", Tks: "TKS-0600033" },
+{ Tienda: "8760", NombreDeTienda: "Coacalco", Tipo: "Tienda", Telefono: "5558989800", IpTienda: "10.246.16.124", Municipio: "Coacalco  Edo. De Mexico", Cp: "55700", Estado: "Coacalco", Distrito: "Edo mexico", Tks: "TKS-0410-0494" },
+{ Tienda: "8761", NombreDeTienda: "Perinorte", Tipo: "Tienda", Telefono: "5558641900", IpTienda: "10.246.20.124", Municipio: "Cuautitlan Izcalli  Edo. De Mexico", Cp: "54769", Estado: "Perinorte", Distrito: "Edo mexico", Tks: "TKS-0501-0675" },
+{ Tienda: "8762", NombreDeTienda: "Interlomas", Tipo: "Tienda", Telefono: "5552463300", IpTienda: "10.246.24.124", Municipio: "Huixquilucan  Edo. De Mexico", Cp: "52760", Estado: "Interlomas", Distrito: "Edo mexico", Tks: "TKS-0502-0504" },
+{ Tienda: "8763", NombreDeTienda: "Tlatilco", Tipo: "Tienda", Telefono: "5553545400", IpTienda: "10.246.28.124", Municipio: "México  D. F.", Cp: "2860", Estado: "Tlatilco", Distrito: "DF", Tks: "TKS-0410-0492" },
+{ Tienda: "8765", NombreDeTienda: "Cuautitlan", Tipo: "Tienda", Telefono: "5558642300", IpTienda: "10.246.36.124", Municipio: "Cuautitlan Izcalli  Edo. De Me", Cp: "54720", Estado: "Cuautitlan", Distrito: "Edo mexico", Tks: "TKS-0503-0421" },
+{ Tienda: "8766", NombreDeTienda: "Los Cabos", Tipo: "Tienda", Telefono: "6241058600", IpTienda: "10.246.40.124", Municipio: "Cabo San Lucas  Baja Calif. Su", Cp: "23410", Estado: "Los Cabos", Distrito: "Pacífico Norte", Tks: "TKS-0509-0019" },
+{ Tienda: "8767", NombreDeTienda: "Xalapa", Tipo: "Tienda", Telefono: "2281410100", IpTienda: "10.246.44.124", Municipio: "Xalapa  Veracruz", Cp: "91190", Estado: "Xalapa", Distrito: "Centro", Tks: "TKS-0500085" },
+{ Tienda: "8768", NombreDeTienda: "Puebla 2 O Norte", Tipo: "Tienda", Telefono: "2223031700", IpTienda: "10.246.48.124", Municipio: "Puebla  Puebla", Cp: "72070", Estado: "Puebla Ii", Distrito: "Centro", Tks: "TKS-0508-0556" },
+{ Tienda: "8769", NombreDeTienda: "Aguascalien", Tipo: "Tienda", Telefono: "4499108900", IpTienda: "10.246.52.124", Municipio: "Aguascalientes  Aguascalientes", Cp: "20120", Estado: "Aguascalientes", Distrito: "Bajío", Tks: "TKS-0608-0438" },
+{ Tienda: "8771", NombreDeTienda: "Los Mochis", Tipo: "Tienda", Telefono: "6688161900", IpTienda: "10.246.60.124", Municipio: "Los Mochis  Sinaloa", Cp: "81200", Estado: "Mochis", Distrito: "Pacífico Norte", Tks: "TKS-0503-0388" },
+{ Tienda: "8772", NombreDeTienda: "Acueducto", Tipo: "Tienda", Telefono: "3336486400", IpTienda: "10.246.64.124", Municipio: "Zapopan  Jalisco", Cp: "45110", Estado: "Acueducto", Distrito: "Occidente", Tks: "TKS-0611-0154" },
+{ Tienda: "8774", NombreDeTienda: "Pachuca", Tipo: "Tienda", Telefono: "7717175700", IpTienda: "10.246.72.124", Municipio: "Pachuca  Hidalgo", Cp: "42080", Estado: "Pachuca", Distrito: "Centro", Tks: "TKS-0508-0553" },
+{ Tienda: "8775", NombreDeTienda: "Ensenada", Tipo: "Tienda", Telefono: "6461522300", IpTienda: "10.246.76.124", Municipio: "Ensenada  Baja California", Cp: "22897", Estado: "Ensenada", Distrito: "Baja norte", Tks: "Telnor" },
+{ Tienda: "8776", NombreDeTienda: "Veracruz", Tipo: "Tienda", Telefono: "2299236900", IpTienda: "10.246.80.124", Municipio: "Veracruz  Veracruz", Cp: "91936", Estado: "Veracruz", Distrito: "Centro", Tks: "TKS-0511-0029" },
+{ Tienda: "8777", NombreDeTienda: "Irapuato", Tipo: "Tienda", Telefono: "4626358600", IpTienda: "10.246.84.124", Municipio: "Irapuato  Guanajuato", Cp: "36557", Estado: "Irapuato", Distrito: "Bajío", Tks: "TKS-0511-0031" },
+{ Tienda: "8778", NombreDeTienda: "Celaya", Tipo: "Tienda", Telefono: "4615987300", IpTienda: "10.246.88.124", Municipio: "Celaya  Guanajuato", Cp: "38010", Estado: "Celaya", Distrito: "Bajío", Tks: "TKS-0511-0032" },
+{ Tienda: "8781", NombreDeTienda: "Tuxtla Guti", Tipo: "Tienda", Telefono: "9616171200", IpTienda: "10.246.100.124", Municipio: "Tuxtla Gtz  Chiapas", Cp: "29060", Estado: "Tuxtla", Distrito: "Pacifico Sur", Tks: "TKS-0610-0063" },
+{ Tienda: "8784", NombreDeTienda: "Mazatlan", Tipo: "Tienda", Telefono: "6699899900", IpTienda: "10.246.112.124", Municipio: "Mazatlan  Sinaloa", Cp: "82123", Estado: "Mazatlan", Distrito: "Pacífico Norte", Tks: "TKS-0609-0086" },
+{ Tienda: "8785", NombreDeTienda: "Puerto Vall", Tipo: "Tienda", Telefono: "3222265500", IpTienda: "10.246.116.124", Municipio: "Puerto Vallarta  Jalisco", Cp: "48291", Estado: "Puerto Vallarta", Distrito: "Occidente", Tks: "TKS-0708-0535" },
+{ Tienda: "8788", NombreDeTienda: "Metepec", Tipo: "Tienda", Telefono: "7222757100", IpTienda: "10.246.128.124", Municipio: "Metepec  Edo. De Mexico", Cp: "52140", Estado: "Metepec", Distrito: "Edo mexico", Tks: "TKS-0511-0057" },
+{ Tienda: "8789", NombreDeTienda: "Miguel Alem", Tipo: "Tienda", Telefono: "8181310900", IpTienda: "10.246.132.124", Municipio: "San Nicolas De Los G  Nuevo Le", Cp: "66447", Estado: "Miguel Aleman", Distrito: "Norte", Tks: "TKS-0603-0219" },
+{ Tienda: "8793", NombreDeTienda: "Poza Rica", Tipo: "Tienda", Telefono: "7828261500", IpTienda: "10.246.148.124", Municipio: "Poza Rica  Veracruz", Cp: "93210", Estado: "Poza Rica", Distrito: "Centro", Tks: "TKS-0808-0200" },
+{ Tienda: "8795", NombreDeTienda: "Can-Cun Rel", Tipo: "Tienda", Telefono: "9981933700", IpTienda: "10.246.156.124", Municipio: "Cancun  Quintana Roo", Cp: "77500", Estado: "Cancun", Distrito: "Golfo", Tks: "TKS-0710-0272" },
+{ Tienda: "8796", NombreDeTienda: "Nuevo Laredo", Tipo: "Tienda", Telefono: "8677116300", IpTienda: "10.246.160.124", Municipio: "Nuevo Laredo  Tamaulipas", Cp: "88001", Estado: "Nuevo Laredo", Distrito: "Noreste", Tks: "TKS-0804-0049" },
+{ Tienda: "8797", NombreDeTienda: "Saltillo Ii La Nogalera", Tipo: "Tienda", Telefono: "8444119100", IpTienda: "10.246.164.124", Municipio: "Saltillo  Coahuila", Cp: "25019", Estado: "Saltillo Ii", Distrito: "Noreste", Tks: "TKS-0808-0196" },
+{ Tienda: "8798", NombreDeTienda: "Texcoco", Tipo: "Tienda", Telefono: "5959520600", IpTienda: "10.246.168.124", Municipio: "Texcoco  Edo. De México", Cp: "56250", Estado: "Texcoco", Distrito: "Centro", Tks: "TKS-0808-0198" },
+{ Tienda: "8799", NombreDeTienda: "Mx (Atitalaquia)", Tipo: "MDC", Telefono: "7787379500", IpTienda: "10.246.172.50", Municipio: "Atitalaquia  Hidalgo", Cp: "42970", Estado: "Mdc Mexico", Distrito: "Centros Logisticos", Tks: "TKS-0809-0550" },
+{ Tienda: "8852", NombreDeTienda: "Colima", Tipo: "Tienda", Telefono: "3123164100", IpTienda: "10.247.8.124", Municipio: "Colima  Colima.", Cp: "28040", Estado: "Colima", Distrito: "Occidente", Tks: "TKS-0811-0074" },
+{ Tienda: "8854", NombreDeTienda: "Tijuana", Tipo: "Tienda", Telefono: "6649691000", IpTienda: "10.247.16.124", Municipio: "Tijuana  Baja California", Cp: "22205", Estado: "Tijuana 2000", Distrito: "Baja norte", Tks: "Telnor" },
+{ Tienda: "8857", NombreDeTienda: "Acapulco Diamante", Tipo: "Tienda", Telefono: "7444356200", IpTienda: "10.247.64.124", Municipio: "Acapulco De Juarez  Guerrero", Cp: "39907", Estado: "Acapulco Diamante", Distrito: "Pacifico Sur", Tks: "TKS- 1008- 0221" },
+{ Tienda: "8860", NombreDeTienda: "Centro", Tipo: "Tienda", Telefono: "5550361100", IpTienda: "10.247.24.124", Municipio: "Distrito Federal  Distrito Fed", Cp: "15980", Estado: "Centro", Distrito: "DF", Tks: "PEND_NETWORKING" },
+{ Tienda: "4038", NombreDeTienda: "Tijuana Santa Fe", Tipo: "Tienda", Telefono: "6646355300", IpTienda: "10.245.64.124", Municipio: "Portico De San Antonio  B.C", Cp: "22666", Estado: "Tijuana", Distrito: "Null", Tks: "Null" },
+        ];
+
+
+    const searchForm = document.getElementById('search-form');
+    const searchInput = document.getElementById('search-input');
+    const resultsContainer = document.getElementById('results-container');
+    const tableWrapper = document.querySelector('.table-wrapper');
+    const suggestionsContainer = document.getElementById('suggestions-container');
+    const MAX_SUGGESTIONS = 5;
+
+    // --- Funciones para manejar la lógica de búsqueda ---
+    function performSearch(term) {
+        saveSearch(term); // Guarda el término, incluso si es el mismo
+        const filteredResults = storesData.filter(store => {
+            return Object.values(store).some(value =>
+                String(value).toLowerCase().includes(term.toLowerCase())
+            );
+        });
+        renderTable(filteredResults);
+        // Opcional: Si quieres que el input se vacíe después de buscar desde la sugerencia, descomenta la siguiente línea:
+        // searchInput.value = ''; 
+        hideSuggestions();
+    }
+
+function renderTable(data) {
+    if (data.length === 0) {
+        tableWrapper.innerHTML = '<p class="no-results">No se encontraron resultados.</p>';
+        return;
+    }
+
+    let tableHTML = '<table>';
+    tableHTML += '<thead><tr>';
+    tableHTML += '<th>Tienda</th>';
+    tableHTML += '<th>Nombre de Tienda</th>';
+    tableHTML += '<th>Tipo</th>';
+    tableHTML += '<th>Teléfono</th>';
+    tableHTML += '<th>IP Tienda</th>';
+    tableHTML += '<th>Municipio</th>';
+    tableHTML += '<th>CP</th>';
+    tableHTML += '<th>Estado</th>';
+    tableHTML += '<th>Distrito</th>';
+    tableHTML += '<th>TKS</th>';
+    tableHTML += '</tr></thead>';
+
+    tableHTML += '<tbody>';
+    data.forEach(store => {
+        tableHTML += '<tr>';
+        // Aquí se agrega la clase 'copyable-cell' a cada celda.
+        tableHTML += `<td class="copyable-cell">${store.Tienda || 'N/A'}</td>`;
+        tableHTML += `<td class="copyable-cell">${store.NombreDeTienda || 'N/A'}</td>`;
+        tableHTML += `<td class="copyable-cell">${store.Tipo || 'N/A'}</td>`;
+        tableHTML += `<td class="copyable-cell">${store.Telefono || 'N/A'}</td>`;
+        tableHTML += `<td class="copyable-cell">${store.IpTienda || 'N/A'}</td>`;
+        tableHTML += `<td class="copyable-cell">${store.Municipio || 'N/A'}</td>`;
+        tableHTML += `<td class="copyable-cell">${store.Cp || 'N/A'}</td>`;
+        tableHTML += `<td class="copyable-cell">${store.Estado || 'N/A'}</td>`;
+        tableHTML += `<td class="copyable-cell">${store.Distrito || 'N/A'}</td>`;
+        tableHTML += `<td class="copyable-cell">${store.Tks || 'N/A'}</td>`;
+        tableHTML += '</tr>';
+    });
+    tableHTML += '</tbody>';
+    tableHTML += '</table>';
+
+    tableWrapper.innerHTML = tableHTML;
+    
+    // Es crucial llamar a la función de copiado aquí, después de que la tabla ya está en el DOM.
+    setupCopyFunctionality();
+}
+
+    // --- FUNCIONALIDAD: COPIAR AL HACER CLIC ---
+function setupCopyFunctionality() {
+  const cells = document.querySelectorAll('.copyable-cell');
+  cells.forEach(cell => {
+    cell.addEventListener('click', (event) => {
+      const textToCopy = event.target.textContent;
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => {
+          // Obtener la posición de la celda
+          const cellRect = event.target.getBoundingClientRect();
+          const feedback = document.createElement('span');
+          
+          // Crear el elemento de feedback
+          feedback.textContent = '...Copiado!';
+          feedback.classList.add('copy-feedback');
+          
+          // Establecer la posición del mensaje al inicio de la celda
+          feedback.style.top = `${cellRect.top + window.scrollY}px`;
+          feedback.style.left = `${cellRect.left + window.scrollX}px`;
+          feedback.style.transform = `translateY(-120%) translateX(0%)`; /* Posición horizontal al inicio de la columna */
+          
+          // Añadir el mensaje al body para que su posición sea relativa a la ventana
+          document.body.appendChild(feedback);
+          
+          setTimeout(() => { feedback.classList.add('show'); }, 10);
+          setTimeout(() => {
+            feedback.classList.remove('show');
+            setTimeout(() => feedback.remove(), 500);
+          }, 1000);
+        })
+        .catch(err => {
+          console.error('No se pudo copiar el texto: ', err);
+        });
+    });
+  });
+}
+
+
+    // --- FUNCIONALIDAD DE SUGERENCIAS DE BÚSQUEDA ---
+
+    function getRecentSearches() {
+        const searches = localStorage.getItem('recentPcSearches'); 
+        return searches ? JSON.parse(searches) : [];
+    }
+
+    function saveSearch(searchTerm) {
+        if (!searchTerm || typeof searchTerm !== 'string') return;
+
+        let searches = getRecentSearches();
+        searches = searches.filter(s => s.toLowerCase() !== searchTerm.toLowerCase());
+        searches.unshift(searchTerm);
+        searches = searches.slice(0, MAX_SUGGESTIONS);
+        localStorage.setItem('recentPcSearches', JSON.stringify(searches)); 
+    }
+
+    function showSuggestions() {
+        const recentSearches = getRecentSearches();
+        suggestionsContainer.innerHTML = '';
+
+        if (recentSearches.length > 0) {
+            recentSearches.forEach(search => {
+                const suggestionItem = document.createElement('div');
+                suggestionItem.classList.add('suggestion-item');
+                suggestionItem.textContent = search;
+                
+                if (suggestionItem.hasAttribute('title')) {
+                    suggestionItem.removeAttribute('title');
+                }
+
+                suggestionItem.addEventListener('mousedown', (event) => {
+                    event.preventDefault(); 
+                });
+
+                suggestionItem.addEventListener('click', () => {
+                    searchInput.value = search;
+                    hideSuggestions();
+                    performSearch(search); 
+                });
+                suggestionsContainer.appendChild(suggestionItem);
+            });
+            suggestionsContainer.style.display = 'block';
+        } else {
+            suggestionsContainer.style.display = 'none';
+        }
+    }
+
+    function hideSuggestions() {
+        suggestionsContainer.style.display = 'none';
+    }
+
+    searchForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const searchTerm = searchInput.value.trim();
+        if (searchTerm) {
+            performSearch(searchTerm);
+        } else {
+            renderTable([]); 
+        }
+    });
+
+    searchInput.addEventListener('focus', showSuggestions);
+    searchInput.addEventListener('blur', () => {
+        setTimeout(hideSuggestions, 150); 
+
+    });
+    
+</script>
+
+</body>
+</html>

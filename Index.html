@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Buscador de PCs Home Depot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-image: url('THD_Fondo3.jpg');
+            background-size: cover; /* Ajusta la imagen para que cubra todo el fondo */
+            background-position: center; /* Centra la imagen */
+            background-repeat: no-repeat; /* Evita que la imagen se repita */
+            background-attachment: fixed; /* Mantiene la imagen fija al hacer scroll */
+            background-color: #f4f4f4;
+        }
+
+        .image-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .image-container img {
+            max-width: 350px;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* --- ESTILOS DE NAVEGACIÓN (PESTAÑAS) --- */
+        nav {
+            margin-bottom: 30px;
+            background-color: #e2e6ea; /* Un fondo suave para la barra de navegación */
+            padding: 10px 0;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex; /* Para que los enlaces se pongan en línea */
+            justify-content: center; /* Centrar los enlaces */
+        }
+        nav a {
+            text-decoration: none;
+            color: #007bff; /* Color del texto del enlace */
+            padding: 10px 20px;
+            margin: 0 5px; /* Espacio entre los enlaces */
+            border-radius: 5px;
+            transition: background-color 0.3s ease; /* Transición suave al pasar el ratón */
+            font-weight: bold;
+        }
+        nav a:hover {
+            background-color: #1ed34b85; /* Color de fondo al pasar el ratón */
+        }
+        nav a.active { /* Estilo para la pestaña activa/seleccionada */
+            background-color: #1ed34b;
+            color: rgb(0, 0, 0);
+        }
+        /* --- FIN ESTILOS DE NAVEGACIÓN --- */
+
+        .search-container {
+            display: flex;
+            align-items: flex-start; /* Alinea los ítems al inicio del eje cruzado (arriba) */
+            justify-content: center; /* Centra los elementos horizontalmente */
+            margin-bottom: 30px;
+        }
+
+        .input-wrapper {
+            position: relative; /* Importante para el posicionamiento de las sugerencias */
+        }
+
+        .search-container input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 300px; /* Ancho del input */
+            font-size: 16px;
+        }
+        .search-container button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-left: 5px; /* Margen a la izquierda del botón */
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            height: 40px; /* Aproximadamente la altura del input con padding */
+            line-height: 1.5; /* Ajusta si el texto del botón no se centra verticalmente */
+            box-sizing: border-box; /* Incluir padding y borde en la altura */
+        }
+        .search-container button:hover {
+            background-color: #007bff;
+        }
+        #results-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* --- ESTILOS PARA EL SCROLL HORIZONTAL DE LA TABLA --- */
+        .table-wrapper {
+            overflow-x: auto; /* ¡Esta es la propiedad clave! */
+            max-width: 100%;    /* Asegura que no se desborde del contenedor padre */
+            -webkit-overflow-scrolling: touch; /* Mejora el scroll en dispositivos táctiles */
+        }
+        table {
+            width: 100%; /* La tabla ocupará el 100% del wrapper */
+            min-width: 1200px; /* Ajusta este ancho mínimo si necesitas más espacio para las nuevas columnas */
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden; /* Esto ayuda a que los bordes redondeados se vean bien */
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px; /* Ajustado para un poco más de espacio */
+            text-align: left;
+            white-space: nowrap; /* Evita que el texto de las celdas se rompa en varias líneas */
+            font-size: 18px;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            color: #333;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #16a039;
+            color: #ffffff;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        /* --- Estilos ESPECÍFICOS para las SUGERENCIAS de búsqueda --- */
+        #suggestions-container {
+            position: absolute; /* Para que flote sobre el contenido */
+            top: 100%; /* Justo debajo del input */
+            left: 0;
+            width: 100%; /* El 100% del ancho de su padre (input-wrapper) */
+            max-height: 180px; /* Para que sea scrollable si hay muchas */
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 1000; /* Asegura que esté por encima de otros elementos */
+            display: none; /* Ocultar por defecto */
+            border-radius: 0 0 5px 5px; /* Bordes redondeados solo abajo */
+        }
+
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #333;
+            overflow: hidden;
+            text-overflow: clip;
+            white-space: nowrap;
+        }
+
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* --- ESTILOS PARA LA NUEVA FUNCIONALIDAD DE COPIADO --- */
+        .copy-feedback {
+            position: absolute;
+            background-color: #007bff; /* Color azul para el mensaje */
+            color: white; /* Color del texto */
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            left: 75%; /* Mueve el punto de inicio al centro de la celda */
+            transform: translateY(-120%) translateX(-50%); /* Ajusta verticalmente y luego mueve a la izquierda la mitad de su ancho */
+            white-space: nowrap;
+            white-space: nowrap;
+            z-index: 10;
+        }
+        .copy-feedback.show {
+            opacity: 1;
+        }
+
+        /* --- INICIO DEL CAMBIO: ESTILOS PARA TRUNCAR LA COLUMNA DE ENLACE --- */
+        .table-wrapper td:last-child {
+            max-width: 300px;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="image-container">
+        <img src="THD_logo.jpg" alt="Logo de la empresa">
+    </div>
+
+    <nav>
+        <a href="Index.html" class="active">Index</a>
+        <a href="Tiendas Homedepot.html">Tiendas Homedepot</a>
+        <a href="PCs Homedepot.html">PCs Homedepot</a>
+        <a href="POs Homedepot.html">POS Homedepot</a>
+    </nav>
+    <div class="search-container">
+        <form id="search-form" style="display: flex; align-items: flex-start;">
+            <div class="input-wrapper">
+                <input type="text" id="search-input" placeholder="Buscar Enlace..." name="q" autocomplete="off">
+                <div id="suggestions-container"></div>
+            </div>
+            <button type="submit">Buscar</button>
+        </form>
+    </div>
+
+    <div id="results-container">
+        <div class="table-wrapper">
+            </div>
+    </div>
+
+
+<script>
+    const pcsData = [
+
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Old_Fleet", Enlace: "fleet.homedepot.com.mx/Account/LogOn" },
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "New_Fleet", Enlace: "http://fleethd.homedepot.com.mx/" },
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Sicredi", Enlace: "http://accesoapp.homedepot.com.mx/" },
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Adobesign", Enlace: "https://auth.services.adobe.com/en_US/deeplink.html?deeplink=ssofirst&callback=https%3A%2F%2Fims-na1.adobelogin.com%2Fims%2Fadobeid%2FEchoSign2%2FAdobeID%2Fcode%3Fredirect_uri%3Dhttps%253A%252F%252Fgps.echosign.com%252Fpublic%252FadobeIDLogin%253Fserver%253Dhomedepotmx.na2.documents.adobe.com%2526port%253D443%26code_challenge_method%3Dplain%26use_ms_for_expiry%3Dtrue&client_id=EchoSign2&scope=openid%2CAdobeID%2CDCAPI%2Cadditional_info.account_type%2Cskybox%2Cupdate_profile.first_name%2Cupdate_profile.last_name%2Cagreement_send%2Cagreement_sign%2Csign_library_write%2Csign_user_read%2Csign_user_write%2Cagreement_read%2Cagreement_write%2Cwidget_read%2Cwidget_write%2Cworkflow_read%2Cworkflow_write%2Csign_library_read%2Cadditional_info.projectedProductContext%2Csign_webhook_read%2Csign_webhook_write%2Csign_webhook_retention%2Csao.ACOM_ESIGN_TRIAL%2Cee.GROUP_SIGN_WEB&denied_callback=https%3A%2F%2Fims-na1.adobelogin.com%2Fims%2Fdenied%2FEchoSign2%3Fredirect_uri%3Dhttps%253A%252F%252Fgps.echosign.com%252Fpublic%252FadobeIDLogin%253Fserver%253Dhomedepotmx.na2.documents.adobe.com%2526port%253D443%26response_type%3Dcode&relay=0f0b60f4-6ef8-4d80-a269-d4a6f9401b95&locale=en_US&flow_type=code&ctx_id=Adobe_Sign&dctx_id=adobe_document_cloud&idp_flow_type=login#/"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Vendor Portal", Enlace: "https://proveedores2.homedepot.com/"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Conectados", Enlace: "https://thehomedepotmx.sharepoint.com/sites/ConectadosTHD/SitePages/Home"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Universidad HD", Enlace: "https://talentohomedepot.csod.com/"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Portal de Encuestas", Enlace: "http://10.21.69.31/survey/Account/login"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Coppel Pay", Enlace: "https://pos.coppelpay.com/login"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Proxy Coppel", Enlace: "http://paprxystores01.homedepot.com.mx Puerto: 8080"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Depositos Banamex", Enlace: "https://depositoelectronico.cecoban.mx/weblogin.aspx"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Depo Banmex Cheques", Enlace: "https://remotedepositcapturecitimexico.cecoban.mx/underlogin.aspx"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Hipoteca Verde", Enlace: "http://proveedoreco.infonavit.org.mx/proveedoresEcoWeb/"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Facturaición Electronica", Enlace: "https://facturacion.homedepot.com.mx/facto/faces/hdm/facturacion/web/expressbuscar.xhtmlhttps://facturacion.homedepot.com.mx/facto/faces/hdm/facturacion/web/expressbuscar.xhtml"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "SFA", Enlace: "https://sfaprod.crm.dynamics.com/"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Unigis", Enlace: "https://eksitesecurity.azurewebsites.net/Account/LogOn?ReturnUrl=https://web.tya.com.mx:8110/Billing/&EkCust=19&CustCss=#https://thd-prd.unigis.com/THD/Login.aspx"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "SOS", Enlace: "https://sos.homedepot.com.mx/"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Snow", Enlace: "https://thdmexprod.service-now.com/sp?sysparm_stack=no"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "AD Manager Plus", Enlace: "https://admanagerplus.homedepot.com.mx:8443/AppsHome.do"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "Reset de Contraseña", Enlace: " https://unlock.open.com.mx:443"},
+{ AplicaEn1: "En Todas las Tiendas", AplicaEn2: "En Todas las Tiendas", Tipo: "-", Telefono: "-", Sistema: "VPN", Enlace: "207.248.236.66"},
+{ AplicaEn1: "1123", AplicaEn2: "POLANCO", Tipo: "Tienda", Telefono: "5525810900", Sistema: "SMS_IN", Enlace: "http://ispcw1123/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1123", AplicaEn2: "POLANCO", Tipo: "Tienda", Telefono: "5525810900", Sistema: "SMS_OUT", Enlace: "http://10.245.216.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1137", AplicaEn2: "EL REFUGIO", Tipo: "Tienda", Telefono: "4422623600", Sistema: "SMS_IN", Enlace: "http://ispcw1123/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1137", AplicaEn2: "EL REFUGIO", Tipo: "Tienda", Telefono: "4422623600", Sistema: "SMS_OUT", Enlace: "http://10.245.72.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1161", AplicaEn2: "SAN LUIS POTOSI EAST", Tipo: "Tienda", Telefono: "4448267800", Sistema: "SMS_IN", Enlace: "http://ispcw1161/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1161", AplicaEn2: "SAN LUIS POTOSI EAST", Tipo: "Tienda", Telefono: "4448267800", Sistema: "SMS_OUT", Enlace: "http://10.244.176.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1162", AplicaEn2: "DELICIAS", Tipo: "Tienda", Telefono: "6391390800", Sistema: "SMS_IN", Enlace: "http://ispcw1162/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1162", AplicaEn2: "DELICIAS", Tipo: "Tienda", Telefono: "6391390800", Sistema: "SMS_OUT", Enlace: "http://10.244.184.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1163", AplicaEn2: "AGUASCALIENTES SUR", Tipo: "Tienda", Telefono: "4491760700", Sistema: "SMS_IN", Enlace: "http://ispcw1163/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1163", AplicaEn2: "AGUASCALIENTES SUR", Tipo: "Tienda", Telefono: "4491760700", Sistema: "SMS_OUT", Enlace: "http://10.244.224.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1164", AplicaEn2: "JUITEPEC", Tipo: "Tienda", Telefono: "7775165200", Sistema: "SMS_IN", Enlace: "http://ispcw1164/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1164", AplicaEn2: "JUITEPEC", Tipo: "Tienda", Telefono: "7775165200", Sistema: "SMS_OUT", Enlace: "http://10.244.232.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1165", AplicaEn2: "NEZAHUALCOYOTL", Tipo: "Tienda", Telefono: "5524813100", Sistema: "SMS_IN", Enlace: "http://ispcw1165/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1165", AplicaEn2: "NEZAHUALCOYOTL", Tipo: "Tienda", Telefono: "5524813100", Sistema: "SMS_OUT", Enlace: "http://10.245.88.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1166", AplicaEn2: "JURIQUILLA", Tipo: "Tienda", Telefono: "4424285300", Sistema: "SMS_IN", Enlace: "http://ispcw1166/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1166", AplicaEn2: "JURIQUILLA", Tipo: "Tienda", Telefono: "4424285300", Sistema: "SMS_OUT", Enlace: "http://10.244.240.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1167", AplicaEn2: "ATIZAPAN", Tipo: "Tienda", Telefono: "5523450300", Sistema: "SMS_IN", Enlace: "http://ispcw1167/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1167", AplicaEn2: "ATIZAPAN", Tipo: "Tienda", Telefono: "5523450300", Sistema: "SMS_OUT", Enlace: "http://10.244.160.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1168", AplicaEn2: "TIJUANA SOLER", Tipo: "Tienda", Telefono: "6646351600", Sistema: "SMS_IN", Enlace: "http://ispcw1168/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1168", AplicaEn2: "TIJUANA SOLER", Tipo: "Tienda", Telefono: "6646351600", Sistema: "SMS_OUT", Enlace: "http://10.244.248.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1169", AplicaEn2: "LINCOLN", Tipo: "Tienda", Telefono: "8181212300", Sistema: "SMS_IN", Enlace: "http://ispcw1169/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1169", AplicaEn2: "LINCOLN", Tipo: "Tienda", Telefono: "8181212300", Sistema: "SMS_OUT", Enlace: "http://10.245.96.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1170", AplicaEn2: "CORREGIDORA", Tipo: "Tienda", Telefono: "4422097300", Sistema: "SMS_IN", Enlace: "http://ispcw1170/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1170", AplicaEn2: "CORREGIDORA", Tipo: "Tienda", Telefono: "4422097300", Sistema: "SMS_OUT", Enlace: "http://10.245.128.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1174", AplicaEn2: "CHIHUAHUA NORTE", Tipo: "Tienda", Telefono: "6141586800", Sistema: "SMS_IN", Enlace: "http://ispcw1174/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1174", AplicaEn2: "CHIHUAHUA NORTE", Tipo: "Tienda", Telefono: "6141586800", Sistema: "SMS_OUT", Enlace: "http://10.245.152.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1175", AplicaEn2: "GONZALITOS", Tipo: "Tienda", Telefono: "8117342500", Sistema: "SMS_IN", Enlace: "http://ispcw1175/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1175", AplicaEn2: "GONZALITOS", Tipo: "Tienda", Telefono: "8117342500", Sistema: "SMS_OUT", Enlace: "http://10.245.160.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1176", AplicaEn2: "SANTA ANITA", Tipo: "Tienda", Telefono: "3332836600", Sistema: "SMS_IN", Enlace: "http://ispcw1176/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1176", AplicaEn2: "SANTA ANITA", Tipo: "Tienda", Telefono: "3332836600", Sistema: "SMS_OUT", Enlace: "http://10.245.120.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1177", AplicaEn2: "HUB ATITALAQUIA", Tipo: "HUB", Telefono: "7713602708", Sistema: "SMS_IN", Enlace: "http://ispcw1177/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1177", AplicaEn2: "HUB ATITALAQUIA", Tipo: "HUB", Telefono: "7713602708", Sistema: "SMS_OUT", Enlace: "http://10.246.172.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1179", AplicaEn2: "HUB TIJUANA", Tipo: "HUB", Telefono: "6646356900", Sistema: "SMS_IN", Enlace: "http://ispcw1179/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1179", AplicaEn2: "HUB TIJUANA", Tipo: "HUB", Telefono: "6646356900", Sistema: "SMS_OUT", Enlace: "http://10.245.104.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1180", AplicaEn2: "MDC Ciénega", Tipo: "MDC", Telefono: "8180460000", Sistema: "SMS_IN", Enlace: "http://ispcw1180/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1180", AplicaEn2: "MDC Ciénega", Tipo: "MDC", Telefono: "8180460000", Sistema: "SMS_OUT", Enlace: "http://10.243.248.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1312", AplicaEn2: "LSC GUADALAJARA", Tipo: "LSC", Telefono: "2214343434", Sistema: "SMS_IN", Enlace: "http://ispcw1312/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1312", AplicaEn2: "LSC GUADALAJARA", Tipo: "LSC", Telefono: "2214343434", Sistema: "SMS_OUT", Enlace: "http://10.245.136.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1314", AplicaEn2: "LSC PUEBLA", Tipo: "LSC", Telefono: "2214343434", Sistema: "SMS_IN", Enlace: "http://ispcw1314/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1314", AplicaEn2: "LSC PUEBLA", Tipo: "LSC", Telefono: "2214343434", Sistema: "SMS_OUT", Enlace: "http://10.245.176.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1315", AplicaEn2: "LSC CULIACAN", Tipo: "LSC", Telefono: "6678463400", Sistema: "SMS_IN", Enlace: "http://ispcw1315/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1315", AplicaEn2: "LSC CULIACAN", Tipo: "LSC", Telefono: "6678463400", Sistema: "SMS_OUT", Enlace: "http://10.245.144.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1316", AplicaEn2: "DARK STORE", Tipo: "Dark Store", Telefono: "5519403200", Sistema: "SMS_IN", Enlace: "http://ispcw1316/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1316", AplicaEn2: "DARK STORE", Tipo: "Dark Store", Telefono: "5519403200", Sistema: "SMS_OUT", Enlace: "http://10.245.208.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1317", AplicaEn2: "LSC QUERETARO", Tipo: "LSC", Telefono: "4422569600", Sistema: "SMS_IN", Enlace: "http://ispcw1317/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1317", AplicaEn2: "LSC QUERETARO", Tipo: "LSC", Telefono: "4422569600", Sistema: "SMS_OUT", Enlace: "http://10.245.168.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1318", AplicaEn2: "LSC MONTERREY", Tipo: "LSC", Telefono: "8135515300", Sistema: "SMS_IN", Enlace: "http://ispcw1318/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1318", AplicaEn2: "LSC MONTERREY", Tipo: "LSC", Telefono: "8135515300", Sistema: "SMS_OUT", Enlace: "http://10.245.184.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1319", AplicaEn2: "LSC ESTADO DE MEXICO", Tipo: "LSC", Telefono: "5519403200", Sistema: "SMS_IN", Enlace: "http://ispcw1319/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1319", AplicaEn2: "LSC ESTADO DE MEXICO", Tipo: "LSC", Telefono: "5519403200", Sistema: "SMS_OUT", Enlace: "http://10.245.192.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1323", AplicaEn2: "LSC PUERTO MORELOS", Tipo: "LSC", Telefono: "9988729500", Sistema: "SMS_IN", Enlace: "http://ispcw1323/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1323", AplicaEn2: "LSC PUERTO MORELOS", Tipo: "LSC", Telefono: "9988729500", Sistema: "SMS_OUT", Enlace: "http://10.245.200.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1325", AplicaEn2: "MEXICALI", Tipo: "Tienda", Telefono: "6865516300", Sistema: "SMS_IN", Enlace: "http://ispcw1325/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1325", AplicaEn2: "MEXICALI", Tipo: "Tienda", Telefono: "6865516300", Sistema: "SMS_OUT", Enlace: "http://10.245.48.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1327", AplicaEn2: "GOMEZ PALACIOS", Tipo: "Tienda", Telefono: "8711753600", Sistema: "SMS_IN", Enlace: "http://ispcw1327/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1327", AplicaEn2: "GOMEZ PALACIOS", Tipo: "Tienda", Telefono: "8711753600", Sistema: "SMS_OUT", Enlace: "http://10.245.124.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1328", AplicaEn2: "LAZARO CARDENAS", Tipo: "Tienda", Telefono: "3331623500", Sistema: "SMS_IN", Enlace: "http://ispcw1328/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1328", AplicaEn2: "LAZARO CARDENAS", Tipo: "Tienda", Telefono: "3331623500", Sistema: "SMS_OUT", Enlace: "http://10.245.232.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1331", AplicaEn2: "CANCUN SUR", Tipo: "Tienda", Telefono: "9988814900", Sistema: "SMS_IN", Enlace: "http://ispcw1331/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1331", AplicaEn2: "CANCUN SUR", Tipo: "Tienda", Telefono: "9988814900", Sistema: "SMS_OUT", Enlace: "http://10.245.240.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1333", AplicaEn2: "CONCORDIA", Tipo: "Tienda", Telefono: "8111561600", Sistema: "SMS_IN", Enlace: "http://ispcw1333/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1333", AplicaEn2: "CONCORDIA", Tipo: "Tienda", Telefono: "8111561600", Sistema: "SMS_OUT", Enlace: "http://10.245.8.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1335", AplicaEn2: "HERMOSILLO MORELOS", Tipo: "Tienda", Telefono: "6621094500", Sistema: "SMS_IN", Enlace: "http://ispcw1335/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1335", AplicaEn2: "HERMOSILLO MORELOS", Tipo: "Tienda", Telefono: "6621094500", Sistema: "SMS_OUT", Enlace: "http://10.245.56.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1337", AplicaEn2: "LSC TIJUANA", Tipo: "LSC", Telefono: "6646554500", Sistema: "SMS_IN", Enlace: "http://ispcw1337/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1337", AplicaEn2: "LSC TIJUANA", Tipo: "LSC", Telefono: "6646554500", Sistema: "SMS_OUT", Enlace: "http://10.245.24.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "1342", AplicaEn2: "MIRASUR", Tipo: "Tienda", Telefono: "8181542300", Sistema: "SMS_IN", Enlace: "http://ispcw1342/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "1342", AplicaEn2: "MIRASUR", Tipo: "Tienda", Telefono: "8181542300", Sistema: "SMS_OUT", Enlace: "http://10.245.40.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "4038", AplicaEn2: "TIJUANA SANTA FE", Tipo: "Tienda", Telefono: "6646355300", Sistema: "SMS_IN", Enlace: "http://ispcw4038/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#//"},
+{ AplicaEn1: "4038", AplicaEn2: "TIJUANA SANTA FE", Tipo: "Tienda", Telefono: "6646355300", Sistema: "SMS_OUT", Enlace: "http://10.245.64.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8061", AplicaEn2: "MDC MTY (CIÉNEGA DE FLORES)", Tipo: "MDC", Telefono: "8180460000", Sistema: "SMS_IN", Enlace: "http://ispcw8061/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8061", AplicaEn2: "MDC MTY (CIÉNEGA DE FLORES)", Tipo: "MDC", Telefono: "8180460000", Sistema: "SMS_OUT", Enlace: "http://10.243.248.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8061", AplicaEn2: "MDC MTY (CIÉNEGA DE FLORES)", Tipo: "MDC", Telefono: "6646355300", Sistema: "Manhattan", Enlace: "http://10.21.68.88/wmweb/login.asp"},
+{ AplicaEn1: "8082", AplicaEn2: "ROSARITO", Tipo: "Tienda", Telefono: "6616148100", Sistema: "SMS_IN", Enlace: "http://ispcw8082/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8082", AplicaEn2: "ROSARITO", Tipo: "Tienda", Telefono: "6616148100", Sistema: "SMS_OUT", Enlace: "http://10.244.168.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8085", AplicaEn2: "COATZACOALC", Tipo: "Tienda", Telefono: "9212110600", Sistema: "SMS_IN", Enlace: "http://ispcw8085/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8085", AplicaEn2: "COATZACOALC", Tipo: "Tienda", Telefono: "9212110600", Sistema: "SMS_OUT", Enlace: "http://10.244.192.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8086", AplicaEn2: "TOLUCA CENTRO", Tipo: "Tienda", Telefono: "7222360700", Sistema: "SMS_IN", Enlace: "http://ispcw8086/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8086", AplicaEn2: "TOLUCA CENTRO", Tipo: "Tienda", Telefono: "7222360700", Sistema: "SMS_OUT", Enlace: "http://10.244.200.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8088", AplicaEn2: "QUERETARO I", Tipo: "Tienda", Telefono: "4423093600", Sistema: "SMS_IN", Enlace: "http://ispcw8088/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8088", AplicaEn2: "QUERETARO I", Tipo: "Tienda", Telefono: "4423093600", Sistema: "SMS_OUT", Enlace: "http://10.244.216.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8094", AplicaEn2: "SENDERO", Tipo: "Tienda", Telefono: "8181320500", Sistema: "SMS_IN", Enlace: "http://ispcw8094/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8094", AplicaEn2: "SENDERO", Tipo: "Tienda", Telefono: "8181320500", Sistema: "SMS_OUT", Enlace: "http://10.245.32.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8626", AplicaEn2: "TLAXCALA", Tipo: "Tienda", Telefono: "2464656000", Sistema: "SMS_IN", Enlace: "http://ispcw8626/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8626", AplicaEn2: "TLAXCALA", Tipo: "Tienda", Telefono: "2464656000", Sistema: "SMS_OUT", Enlace: "http://10.247.96.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8628", AplicaEn2: "LA PAZ", Tipo: "Tienda", Telefono: "6121750600", Sistema: "SMS_IN", Enlace: "http://ispcw8628/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8628", AplicaEn2: "LA PAZ", Tipo: "Tienda", Telefono: "6121750600", Sistema: "SMS_OUT", Enlace: "http://10.247.32.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8635", AplicaEn2: "PUEBLA III", Tipo: "Tienda", Telefono: "2222137600", Sistema: "SMS_IN", Enlace: "http://ispcw8635/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8635", AplicaEn2: "PUEBLA III", Tipo: "Tienda", Telefono: "2222137600", Sistema: "SMS_OUT", Enlace: "http://10.247.40.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8636", AplicaEn2: "TLAQUEPAQUE", Tipo: "Tienda", Telefono: "3338377800", Sistema: "SMS_IN", Enlace: "http://ispcw8636/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8636", AplicaEn2: "TLAQUEPAQUE", Tipo: "Tienda", Telefono: "3338377800", Sistema: "SMS_OUT", Enlace: "http://10.247.56.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8637", AplicaEn2: "ECATEPEC", Tipo: "Tienda", Telefono: "5541170800", Sistema: "SMS_IN", Enlace: "http://ispcw8637/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8637", AplicaEn2: "ECATEPEC", Tipo: "Tienda", Telefono: "5541170800", Sistema: "SMS_OUT", Enlace: "http://10.247.72.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8638", AplicaEn2: "PIEDRAS NEGRAS", Tipo: "Tienda", Telefono: "8787842100", Sistema: "SMS_IN", Enlace: "http://ispcw8638/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8638", AplicaEn2: "PIEDRAS NEGRAS", Tipo: "Tienda", Telefono: "8787842100", Sistema: "SMS_OUT", Enlace: "http://10.247.80.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8639", AplicaEn2: "PUEBLA PERIFERICO", Tipo: "Tienda", Telefono: "2226230000", Sistema: "SMS_IN", Enlace: "http://ispcw8639/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8639", AplicaEn2: "PUEBLA PERIFERICO", Tipo: "Tienda", Telefono: "2226230000", Sistema: "SMS_OUT", Enlace: "http://10.247.88.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8642", AplicaEn2: "URUAPAN", Tipo: "Tienda", Telefono: "4525034200", Sistema: "SMS_IN", Enlace: "http://ispcw8642/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8642", AplicaEn2: "URUAPAN", Tipo: "Tienda", Telefono: "4525034200", Sistema: "SMS_OUT", Enlace: "http://10.247.104.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8643", AplicaEn2: "CIRCUNVALACION", Tipo: "Tienda", Telefono: "3338830900", Sistema: "SMS_IN", Enlace: "http://ispcw8644/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8643", AplicaEn2: "CIRCUNVALACION", Tipo: "Tienda", Telefono: "3338830900", Sistema: "SMS_OUT", Enlace: "http://10.247.112.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8644", AplicaEn2: "MATAMOROS", Tipo: "Tienda", Telefono: "8688110600", Sistema: "SMS_IN", Enlace: "http://ispcw8644/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8644", AplicaEn2: "MATAMOROS", Tipo: "Tienda", Telefono: "8688110600", Sistema: "SMS_OUT", Enlace: "http://10.247.120.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8645", AplicaEn2: "TECAMAC", Tipo: "Tienda", Telefono: "5559388000", Sistema: "SMS_IN", Enlace: "http://ispcw8645/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8645", AplicaEn2: "TECAMAC", Tipo: "Tienda", Telefono: "5559388000", Sistema: "SMS_OUT", Enlace: "http://10.247.128.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8646", AplicaEn2: "CUAUTLA", Tipo: "Tienda", Telefono: "7353989600", Sistema: "SMS_IN", Enlace: "http://ispcw8646/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8646", AplicaEn2: "CUAUTLA", Tipo: "Tienda", Telefono: "7353989600", Sistema: "SMS_OUT", Enlace: "http://10.247.136.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8647", AplicaEn2: "ARAGON", Tipo: "Tienda", Telefono: "5541171400", Sistema: "SMS_IN", Enlace: "http://ispcw8647/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8647", AplicaEn2: "ARAGON", Tipo: "Tienda", Telefono: "5541171400", Sistema: "SMS_OUT", Enlace: "http://10.247.160.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8648", AplicaEn2: "LOS REYES", Tipo: "Tienda", Telefono: "5526197800", Sistema: "SMS_IN", Enlace: "http://ispcw8648/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8648", AplicaEn2: "LOS REYES", Tipo: "Tienda", Telefono: "5526197800", Sistema: "SMS_OUT", Enlace: "http://10.247.152.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8649", AplicaEn2: "SAN JUAN DEL RIO", Tipo: "Tienda", Telefono: "4272682300", Sistema: "SMS_IN", Enlace: "http://ispcw8649/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8649", AplicaEn2: "SAN JUAN DEL RIO", Tipo: "Tienda", Telefono: "4272682300", Sistema: "SMS_OUT", Enlace: "http://10.247.168.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8651", AplicaEn2: "NOGALES", Tipo: "Tienda", Telefono: "6313116900", Sistema: "SMS_IN", Enlace: "http://ispcw8651/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8651", AplicaEn2: "NOGALES", Tipo: "Tienda", Telefono: "6313116900", Sistema: "SMS_OUT", Enlace: "http://10.247.184.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8652", AplicaEn2: "FUNDADORES", Tipo: "Tienda", Telefono: "8112230200", Sistema: "SMS_IN", Enlace: "http://ispcw8652/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8652", AplicaEn2: "FUNDADORES", Tipo: "Tienda", Telefono: "8112230200", Sistema: "SMS_OUT", Enlace: "http://10.247.192.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8653", AplicaEn2: "MONCLOVA", Tipo: "Tienda", Telefono: "8661580500", Sistema: "SMS_IN", Enlace: "http://ispcw8653/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8653", AplicaEn2: "MONCLOVA", Tipo: "Tienda", Telefono: "8661580500", Sistema: "SMS_OUT", Enlace: "http://10.247.176.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8654", AplicaEn2: "GUAYMAS", Tipo: "Tienda", Telefono: "6222250900", Sistema: "SMS_IN", Enlace: "http://ispcw8654/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8654", AplicaEn2: "GUAYMAS", Tipo: "Tienda", Telefono: "6222250900", Sistema: "SMS_OUT", Enlace: "http://10.247.200.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8656", AplicaEn2: "ZAMORA", Tipo: "Tienda", Telefono: "3515303000", Sistema: "SMS_IN", Enlace: "http://ispcw8656/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8656", AplicaEn2: "ZAMORA", Tipo: "Tienda", Telefono: "3515303000", Sistema: "SMS_OUT", Enlace: "http://10.247.208.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8657", AplicaEn2: "MANZANILLO", Tipo: "Tienda", Telefono: "3143313900", Sistema: "SMS_IN", Enlace: "http://ispcw8657/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8657", AplicaEn2: "MANZANILLO", Tipo: "Tienda", Telefono: "3143313900", Sistema: "SMS_OUT", Enlace: "http://10.247.216.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8658", AplicaEn2: "CORDOBA", Tipo: "Tienda", Telefono: "2717172100", Sistema: "SMS_IN", Enlace: "http://ispcw8658/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8658", AplicaEn2: "CORDOBA", Tipo: "Tienda", Telefono: "2717172100", Sistema: "SMS_OUT", Enlace: "http://10.247.224.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8659", AplicaEn2: "INDEPENDENCIA", Tipo: "Tienda", Telefono: "3338371600", Sistema: "SMS_IN", Enlace: "http://ispcw8659/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8659", AplicaEn2: "INDEPENDENCIA", Tipo: "Tienda", Telefono: "3338371600", Sistema: "SMS_OUT", Enlace: "http://10.247.240.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8661", AplicaEn2: "SANTA FE", Tipo: "Tienda", Telefono: "5550812100", Sistema: "SMS_IN", Enlace: "http://ispcw8661/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8661", AplicaEn2: "SANTA FE", Tipo: "Tienda", Telefono: "5550812100", Sistema: "SMS_OUT", Enlace: "http://10.247.248.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8662", AplicaEn2: "TEPIC", Tipo: "Tienda", Telefono: "3111296400", Sistema: "SMS_IN", Enlace: "http://ispcw8662/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8662", AplicaEn2: "TEPIC", Tipo: "Tienda", Telefono: "3111296400", Sistema: "SMS_OUT", Enlace: "http://10.247.232.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8663", AplicaEn2: "CAMPECHE", Tipo: "Tienda", Telefono: "9818181500", Sistema: "SMS_IN", Enlace: "http://ispcw8663/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8663", AplicaEn2: "CAMPECHE", Tipo: "Tienda", Telefono: "9818181500", Sistema: "SMS_OUT", Enlace: "http://10.244.16.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8664", AplicaEn2: "TRES RIOS", Tipo: "Tienda", Telefono: "6677594700", Sistema: "SMS_IN", Enlace: "http://ispcw8664/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8664", AplicaEn2: "TRES RIOS", Tipo: "Tienda", Telefono: "6677594700", Sistema: "SMS_OUT", Enlace: "http://10.244.8.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8672", AplicaEn2: "MORELIA ESTE", Tipo: "Tienda", Telefono: "4431477400", Sistema: "SMS_IN", Enlace: "http://ispcw8672/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8672", AplicaEn2: "MORELIA ESTE", Tipo: "Tienda", Telefono: "4431477400", Sistema: "SMS_OUT", Enlace: "http://10.244.24.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8673", AplicaEn2: "PLAYA DEL CARMEN", Tipo: "Tienda", Telefono: "9848715800", Sistema: "SMS_IN", Enlace: "http://ispcw8673/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8673", AplicaEn2: "PLAYA DEL CARMEN", Tipo: "Tienda", Telefono: "9848715800", Sistema: "SMS_OUT", Enlace: "http://10.244.32.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8674", AplicaEn2: "OAXACA", Tipo: "Tienda", Telefono: "9515018600", Sistema: "SMS_IN", Enlace: "http://ispcw8674/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8674", AplicaEn2: "OAXACA", Tipo: "Tienda", Telefono: "9515018600", Sistema: "SMS_OUT", Enlace: "http://10.244.40.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8675", AplicaEn2: "CHETUMAL", Tipo: "Tienda", Telefono: "9832677700", Sistema: "SMS_IN", Enlace: "http://ispcw8675/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8675", AplicaEn2: "CHETUMAL", Tipo: "Tienda", Telefono: "9832677700", Sistema: "SMS_OUT", Enlace: "http://10.244.48.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8676", AplicaEn2: "CARRETERA NACIONAL", Tipo: "Tienda", Telefono: "8112240600", Sistema: "SMS_IN", Enlace: "http://ispcw8676/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8676", AplicaEn2: "CARRETERA NACIONAL", Tipo: "Tienda", Telefono: "8112240600", Sistema: "SMS_OUT", Enlace: "http://10.244.64.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8677", AplicaEn2: "ZACATECAS", Tipo: "Tienda", Telefono: "4924916200", Sistema: "SMS_IN", Enlace: "http://ispcw8677/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8677", AplicaEn2: "ZACATECAS", Tipo: "Tienda", Telefono: "4924916200", Sistema: "SMS_OUT", Enlace: "http://10.244.56.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8679", AplicaEn2: "HUB PERINORTE", Tipo: "HUB", Telefono: "5558618460", Sistema: "SMS_IN", Enlace: "http://ispcw8679/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8679", AplicaEn2: "HUB PERINORTE", Tipo: "HUB", Telefono: "5558618460", Sistema: "SMS_OUT", Enlace: "http://10.244.72.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8681", AplicaEn2: "HUB IZTAPALAPA", Tipo: "HUB", Telefono: "5557168990", Sistema: "SMS_IN", Enlace: "http://ispcw8681/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8681", AplicaEn2: "HUB IZTAPALAPA", Tipo: "HUB", Telefono: "5557168990", Sistema: "SMS_OUT", Enlace: "http://10.244.80.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8682", AplicaEn2: "GUASAVE", Tipo: "Tienda", Telefono: "6877219000", Sistema: "SMS_IN", Enlace: "http://ispcw8682/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8682", AplicaEn2: "GUASAVE", Tipo: "Tienda", Telefono: "6877219000", Sistema: "SMS_OUT", Enlace: "http://10.244.128.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8691", AplicaEn2: "COYOACAN", Tipo: "Tienda", Telefono: "5553380900", Sistema: "SMS_IN", Enlace: "http://ispcw8691/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8691", AplicaEn2: "COYOACAN", Tipo: "Tienda", Telefono: "5553380900", Sistema: "SMS_OUT", Enlace: "http://10.244.112.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8692", AplicaEn2: "LINDA VISTA", Tipo: "Tienda", Telefono: "5557478600", Sistema: "SMS_IN", Enlace: "http://ispcw8692/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8692", AplicaEn2: "LINDA VISTA", Tipo: "Tienda", Telefono: "5557478600", Sistema: "SMS_OUT", Enlace: "http://10.244.208.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8693", AplicaEn2: "CD DEL CARMEN", Tipo: "Tienda", Telefono: "9381313600", Sistema: "SMS_IN", Enlace: "http://ispcw8693/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8693", AplicaEn2: "CD DEL CARMEN", Tipo: "Tienda", Telefono: "9381313600", Sistema: "SMS_OUT", Enlace: "http://10.244.120.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8694", AplicaEn2: "SALAMANCA", Tipo: "Tienda", Telefono: "4646418500", Sistema: "SMS_IN", Enlace: "http://ispcw8694/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8694", AplicaEn2: "SALAMANCA", Tipo: "Tienda", Telefono: "4646418500", Sistema: "SMS_OUT", Enlace: "http://10.244.88.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8696", AplicaEn2: "MERIDA CITADELA", Tipo: "Tienda", Telefono: "9999643200", Sistema: "SMS_IN", Enlace: "http://ispcw8696/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8696", AplicaEn2: "MERIDA CITADELA", Tipo: "Tienda", Telefono: "9999643200", Sistema: "SMS_OUT", Enlace: "http://10.244.104.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8698", AplicaEn2: "TEHUACAN", Tipo: "Tienda", Telefono: "2383803050", Sistema: "SMS_IN", Enlace: "http://ispcw8698/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8698", AplicaEn2: "TEHUACAN", Tipo: "Tienda", Telefono: "2383803050", Sistema: "SMS_OUT", Enlace: "http://10.244.96.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8700", AplicaEn2: "OAT", Tipo: "OAT", Telefono: "8181557000", Sistema: "SMS_IN", Enlace: "http://ispcw8700/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8700", AplicaEn2: "OAT", Tipo: "OAT", Telefono: "8181557000", Sistema: "SMS_OUT", Enlace: "http://10.21.32.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8701", AplicaEn2: "TORRES", Tipo: "Tienda", Telefono: "8183284800", Sistema: "SMS_IN", Enlace: "http://ispcw8701/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8701", AplicaEn2: "TORRES", Tipo: "Tienda", Telefono: "8183284800", Sistema: "SMS_OUT", Enlace: "http://10.248.16.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8702", AplicaEn2: "COAPA CALZADA DEL HUESO", Tipo: "Tienda", Telefono: "5556241400", Sistema: "SMS_IN", Enlace: "http://ispcw8702/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8702", AplicaEn2: "COAPA CALZADA DEL HUESO", Tipo: "Tienda", Telefono: "5556241400", Sistema: "SMS_OUT", Enlace: "http://10.248.24.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8703", AplicaEn2: "REVOLUCION", Tipo: "Tienda", Telefono: "8183694400", Sistema: "SMS_IN", Enlace: "http://ispcw8703/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8703", AplicaEn2: "REVOLUCION", Tipo: "Tienda", Telefono: "8183694400", Sistema: "SMS_OUT", Enlace: "http://10.248.32.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8704", AplicaEn2: "CUMBRES", Tipo: "Tienda", Telefono: "8181588000", Sistema: "SMS_IN", Enlace: "http://ispcw8704/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8704", AplicaEn2: "CUMBRES", Tipo: "Tienda", Telefono: "8181588000", Sistema: "SMS_OUT", Enlace: "http://10.248.40.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8705", AplicaEn2: "MEXICALI", Tipo: "Tienda", Telefono: "6869068000", Sistema: "SMS_IN", Enlace: "http://ispcw8705/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8705", AplicaEn2: "MEXICALI", Tipo: "Tienda", Telefono: "6869068000", Sistema: "SMS_OUT", Enlace: "http://10.248.48.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8706", AplicaEn2: "TIJUANA", Tipo: "Tienda", Telefono: "6646088000", Sistema: "SMS_IN", Enlace: "http://ispcw8706/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8706", AplicaEn2: "TIJUANA", Tipo: "Tienda", Telefono: "6646088000", Sistema: "SMS_OUT", Enlace: "http://10.248.56.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8707", AplicaEn2: "SAN LUIS", Tipo: "Tienda", Telefono: "4448343800", Sistema: "SMS_IN", Enlace: "http://ispcw8707/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8707", AplicaEn2: "SAN LUIS", Tipo: "Tienda", Telefono: "4448343800", Sistema: "SMS_OUT", Enlace: "http://10.248.64.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8708", AplicaEn2: "CULIACAN", Tipo: "Tienda", Telefono: "6677588000", Sistema: "SMS_IN", Enlace: "http://ispcw8708/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8708", AplicaEn2: "CULIACAN", Tipo: "Tienda", Telefono: "6677588000", Sistema: "SMS_OUT", Enlace: "http://10.248.72.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8710", AplicaEn2: "NOGALAR", Tipo: "Tienda", Telefono: "8183054800", Sistema: "SMS_IN", Enlace: "http://ispcw8710/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8710", AplicaEn2: "NOGALAR", Tipo: "Tienda", Telefono: "8183054800", Sistema: "SMS_OUT", Enlace: "http://10.248.88.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8713", AplicaEn2: "HENEQUEN", Tipo: "Tienda", Telefono: "6566374700", Sistema: "SMS_IN", Enlace: "http://ispcw8713/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8713", AplicaEn2: "HENEQUEN", Tipo: "Tienda", Telefono: "6566374700", Sistema: "SMS_OUT", Enlace: "http://10.248.112.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8714", AplicaEn2: "LOPEZ MATEO", Tipo: "Tienda", Telefono: "6566861000", Sistema: "SMS_IN", Enlace: "http://ispcw8714/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8714", AplicaEn2: "LOPEZ MATEO", Tipo: "Tienda", Telefono: "6566861000", Sistema: "SMS_OUT", Enlace: "http://10.248.120.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8716", AplicaEn2: "LEON", Tipo: "Tienda", Telefono: "4777885800", Sistema: "SMS_IN", Enlace: "http://ispcw8716/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8716", AplicaEn2: "LEON", Tipo: "Tienda", Telefono: "4777885800", Sistema: "SMS_OUT", Enlace: "http://10.248.136.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8719", AplicaEn2: "CHIHUAHUA", Tipo: "Tienda", Telefono: "6144398200", Sistema: "SMS_IN", Enlace: "http://ispcw8719/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8719", AplicaEn2: "CHIHUAHUA", Tipo: "Tienda", Telefono: "6144398200", Sistema: "SMS_OUT", Enlace: "http://10.248.160.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8720", AplicaEn2: "HERMOSILLO", Tipo: "Tienda", Telefono: "6622598500", Sistema: "SMS_IN", Enlace: "http://ispcw8720/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8720", AplicaEn2: "HERMOSILLO", Tipo: "Tienda", Telefono: "6622598500", Sistema: "SMS_OUT", Enlace: "http://10.248.168.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8723", AplicaEn2: "JUAREZ-TECN", Tipo: "Tienda", Telefono: "6562270000", Sistema: "SMS_IN", Enlace: "http://ispcw8723/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8723", AplicaEn2: "JUAREZ-TECN", Tipo: "Tienda", Telefono: "6562270000", Sistema: "SMS_OUT", Enlace: "http://10.248.192.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8724", AplicaEn2: "TLALNEPANTL", Tipo: "Tienda", Telefono: "5519401800", Sistema: "SMS_IN", Enlace: "http://ispcw8724/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8724", AplicaEn2: "TLALNEPANTL", Tipo: "Tienda", Telefono: "5519401800", Sistema: "SMS_OUT", Enlace: "http://10.248.200.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8725", AplicaEn2: "NAUCALPAN", Tipo: "Tienda", Telefono: "5521227400", Sistema: "SMS_IN", Enlace: "http://ispcw8725/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8725", AplicaEn2: "NAUCALPAN", Tipo: "Tienda", Telefono: "5521227400", Sistema: "SMS_OUT", Enlace: "http://10.248.208.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8726", AplicaEn2: "CUERNAVACA", Tipo: "Tienda", Telefono: "7771010700", Sistema: "SMS_IN", Enlace: "http://ispcw8726/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8726", AplicaEn2: "CUERNAVACA", Tipo: "Tienda", Telefono: "7771010700", Sistema: "SMS_OUT", Enlace: "http://10.248.216.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8727", AplicaEn2: "GUADALAJARA", Tipo: "Tienda", Telefono: "3338848000", Sistema: "SMS_IN", Enlace: "http://ispcw8727/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8727", AplicaEn2: "GUADALAJARA", Tipo: "Tienda", Telefono: "3338848000", Sistema: "SMS_OUT", Enlace: "http://10.248.244.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8728", AplicaEn2: "TORREON", Tipo: "Tienda", Telefono: "8717474500", Sistema: "SMS_IN", Enlace: "http://ispcw8728/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8728", AplicaEn2: "TORREON", Tipo: "Tienda", Telefono: "8717474500", Sistema: "SMS_OUT", Enlace: "http://10.248.232.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8729", AplicaEn2: "SALTILLO", Tipo: "Tienda", Telefono: "8444385400", Sistema: "SMS_IN", Enlace: "http://ispcw8729/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8729", AplicaEn2: "SALTILLO", Tipo: "Tienda", Telefono: "8444385400", Sistema: "SMS_OUT", Enlace: "http://10.248.240.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8730", AplicaEn2: "TAMPICO", Tipo: "Tienda", Telefono: "8332302800", Sistema: "SMS_IN", Enlace: "http://ispcw8730/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8730", AplicaEn2: "TAMPICO", Tipo: "Tienda", Telefono: "8332302800", Sistema: "SMS_OUT", Enlace: "http://10.248.248.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8733", AplicaEn2: "DURANGO", Tipo: "Tienda", Telefono: "6188272200", Sistema: "SMS_IN", Enlace: "http://ispcw8733/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8733", AplicaEn2: "DURANGO", Tipo: "Tienda", Telefono: "6188272200", Sistema: "SMS_OUT", Enlace: "http://10.248.36.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8734", AplicaEn2: "REYNOSA", Tipo: "Tienda", Telefono: "8999092000", Sistema: "SMS_IN", Enlace: "http://ispcw8734/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8734", AplicaEn2: "REYNOSA", Tipo: "Tienda", Telefono: "8999092000", Sistema: "SMS_OUT", Enlace: "http://10.248.44.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8735", AplicaEn2: "PUEBLA", Tipo: "Tienda", Telefono: "2223038800", Sistema: "SMS_IN", Enlace: "http://ispcw8735/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8735", AplicaEn2: "PUEBLA", Tipo: "Tienda", Telefono: "2223038800", Sistema: "SMS_OUT", Enlace: "http://10.248.52.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8736", AplicaEn2: "ACAPULCO", Tipo: "Tienda", Telefono: "7444691600", Sistema: "SMS_IN", Enlace: "http://ispcw8736/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8736", AplicaEn2: "ACAPULCO", Tipo: "Tienda", Telefono: "7444691600", Sistema: "SMS_OUT", Enlace: "http://10.248.60.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8738", AplicaEn2: "QUERETARO", Tipo: "Tienda", Telefono: "4421927000", Sistema: "SMS_IN", Enlace: "http://ispcw8738/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8738", AplicaEn2: "QUERETARO", Tipo: "Tienda", Telefono: "4421927000", Sistema: "SMS_OUT", Enlace: "http://10.248.76.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8739", AplicaEn2: "VILLAHERMOS", Tipo: "Tienda", Telefono: "9933136900", Sistema: "SMS_IN", Enlace: "http://ispcw8739/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8739", AplicaEn2: "VILLAHERMOS", Tipo: "Tienda", Telefono: "9933136900", Sistema: "SMS_OUT", Enlace: "http://10.248.84.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8740", AplicaEn2: "LEÓN CENTRO", Tipo: "Tienda", Telefono: "4777100100", Sistema: "SMS_IN", Enlace: "http://ispcw8740/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8740", AplicaEn2: "LEÓN CENTRO", Tipo: "Tienda", Telefono: "4777100100", Sistema: "SMS_OUT", Enlace: "http://10.248.92.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8741", AplicaEn2: "MORELIA", Tipo: "Tienda", Telefono: "4433224500", Sistema: "SMS_IN", Enlace: "http://ispcw8741/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8741", AplicaEn2: "MORELIA", Tipo: "Tienda", Telefono: "4433224500", Sistema: "SMS_OUT", Enlace: "http://10.248.100.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8742", AplicaEn2: "COORDILLERA", Tipo: "Tienda", Telefono: "3310020200", Sistema: "SMS_IN", Enlace: "http://ispcw8742/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8742", AplicaEn2: "COORDILLERA", Tipo: "Tienda", Telefono: "3310020200", Sistema: "SMS_OUT", Enlace: "http://10.248.108.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8743", AplicaEn2: "MERIDA", Tipo: "Tienda", Telefono: "9999420500", Sistema: "SMS_IN", Enlace: "http://ispcw8743/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8743", AplicaEn2: "MERIDA", Tipo: "Tienda", Telefono: "9999420500", Sistema: "SMS_OUT", Enlace: "http://10.248.116.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8744", AplicaEn2: "COAPA MIRAMONTES", Tipo: "Tienda", Telefono: "5554833900", Sistema: "SMS_IN", Enlace: "http://ispcw8744/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8744", AplicaEn2: "COAPA MIRAMONTES", Tipo: "Tienda", Telefono: "5554833900", Sistema: "SMS_OUT", Enlace: "http://10.248.124.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8745", AplicaEn2: "LOMAS VERDE", Tipo: "Tienda", Telefono: "5553710400", Sistema: "SMS_IN", Enlace: "http://ispcw8745/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8745", AplicaEn2: "LOMAS VERDE", Tipo: "Tienda", Telefono: "5553710400", Sistema: "SMS_OUT", Enlace: "http://10.248.132.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8746", AplicaEn2: "SAN JERÓNIM", Tipo: "Tienda", Telefono: "5553770900", Sistema: "SMS_IN", Enlace: "http://ispcw8746/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8746", AplicaEn2: "SAN JERÓNIM", Tipo: "Tienda", Telefono: "5553770900", Sistema: "SMS_OUT", Enlace: "http://10.248.140.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8747", AplicaEn2: "IZTAPALAPA", Tipo: "Tienda", Telefono: "5558041200", Sistema: "SMS_IN", Enlace: "http://ispcw8747/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8747", AplicaEn2: "IZTAPALAPA", Tipo: "Tienda", Telefono: "5558041200", Sistema: "SMS_OUT", Enlace: "http://10.248.148.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8748", AplicaEn2: "MIXCOAC", Tipo: "Tienda", Telefono: "5552780800", Sistema: "SMS_IN", Enlace: "http://ispcw8748/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8748", AplicaEn2: "MIXCOAC", Tipo: "Tienda", Telefono: "5552780800", Sistema: "SMS_OUT", Enlace: "http://10.248.156.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8751", AplicaEn2: "GUADALUPE", Tipo: "Tienda", Telefono: "8181272000", Sistema: "SMS_IN", Enlace: "http://ispcw8751/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8751", AplicaEn2: "GUADALUPE", Tipo: "Tienda", Telefono: "8181272000", Sistema: "SMS_OUT", Enlace: "http://10.248.180.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8752", AplicaEn2: "SANTA CATARINA", Tipo: "Tienda", Telefono: "8181240600", Sistema: "SMS_IN", Enlace: "http://ispcw8752/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8752", AplicaEn2: "SANTA CATARINA", Tipo: "Tienda", Telefono: "8181240600", Sistema: "SMS_OUT", Enlace: "http://10.248.188.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8754", AplicaEn2: "TAPACHULA", Tipo: "Tienda", Telefono: "9626201900", Sistema: "SMS_IN", Enlace: "http://ispcw8754/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8754", AplicaEn2: "TAPACHULA", Tipo: "Tienda", Telefono: "9626201900", Sistema: "SMS_OUT", Enlace: "http://10.248.204.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8757", AplicaEn2: "CD VICTORIA", Tipo: "Tienda", Telefono: "8341070000", Sistema: "SMS_IN", Enlace: "http://ispcw8757/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8757", AplicaEn2: "CD VICTORIA", Tipo: "Tienda", Telefono: "8341070000", Sistema: "SMS_OUT", Enlace: "http://10.248.248.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8759", AplicaEn2: "OBREGON", Tipo: "Tienda", Telefono: "6444109300", Sistema: "SMS_IN", Enlace: "http://ispcw8759/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8759", AplicaEn2: "OBREGON", Tipo: "Tienda", Telefono: "6444109300", Sistema: "SMS_OUT", Enlace: "http://10.248.244.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8760", AplicaEn2: "COACALCO", Tipo: "Tienda", Telefono: "5558989800", Sistema: "SMS_IN", Enlace: "http://ispcw8760/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8760", AplicaEn2: "COACALCO", Tipo: "Tienda", Telefono: "5558989800", Sistema: "SMS_OUT", Enlace: "http://10.246.16.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8761", AplicaEn2: "PERINORTE", Tipo: "Tienda", Telefono: "5558641900", Sistema: "SMS_IN", Enlace: "http://ispcw8761/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8761", AplicaEn2: "PERINORTE", Tipo: "Tienda", Telefono: "5558641900", Sistema: "SMS_OUT", Enlace: "http://10.246.20.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8762", AplicaEn2: "INTERLOMAS", Tipo: "Tienda", Telefono: "5552463300", Sistema: "SMS_IN", Enlace: "http://ispcw8762/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8762", AplicaEn2: "INTERLOMAS", Tipo: "Tienda", Telefono: "5552463300", Sistema: "SMS_OUT", Enlace: "http://10.246.24.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8763", AplicaEn2: "TLATILCO", Tipo: "Tienda", Telefono: "5553545400", Sistema: "SMS_IN", Enlace: "http://ispcw8763/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8763", AplicaEn2: "TLATILCO", Tipo: "Tienda", Telefono: "5553545400", Sistema: "SMS_OUT", Enlace: "http://10.246.28.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8765", AplicaEn2: "CUAUTITLAN", Tipo: "Tienda", Telefono: "5558642300", Sistema: "SMS_IN", Enlace: "http://ispcw8765/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8765", AplicaEn2: "CUAUTITLAN", Tipo: "Tienda", Telefono: "5558642300", Sistema: "SMS_OUT", Enlace: "http://10.246.36.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8766", AplicaEn2: "LOS CABOS", Tipo: "Tienda", Telefono: "6241058600", Sistema: "SMS_IN", Enlace: "http://ispcw8766/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8766", AplicaEn2: "LOS CABOS", Tipo: "Tienda", Telefono: "6241058600", Sistema: "SMS_OUT", Enlace: "http://10.246.40.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8767", AplicaEn2: "XALAPA", Tipo: "Tienda", Telefono: "2281410100", Sistema: "SMS_IN", Enlace: "http://ispcw8767/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8767", AplicaEn2: "XALAPA", Tipo: "Tienda", Telefono: "2281410100", Sistema: "SMS_OUT", Enlace: "http://10.246.44.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8768", AplicaEn2: "PUEBLA 2 O NORTE", Tipo: "Tienda", Telefono: "2223031700", Sistema: "SMS_IN", Enlace: "http://ispcw8768/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8768", AplicaEn2: "PUEBLA 2 O NORTE", Tipo: "Tienda", Telefono: "2223031700", Sistema: "SMS_OUT", Enlace: "http://10.246.48.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8769", AplicaEn2: "AGUASCALIEN", Tipo: "Tienda", Telefono: "4499108900", Sistema: "SMS_IN", Enlace: "http://ispcw8769/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8769", AplicaEn2: "AGUASCALIEN", Tipo: "Tienda", Telefono: "4499108900", Sistema: "SMS_OUT", Enlace: "http://10.246.52.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8771", AplicaEn2: "LOS MOCHIS", Tipo: "Tienda", Telefono: "6688161900", Sistema: "SMS_IN", Enlace: "http://ispcw8771/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8771", AplicaEn2: "LOS MOCHIS", Tipo: "Tienda", Telefono: "6688161900", Sistema: "SMS_OUT", Enlace: "http://10.246.60.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8772", AplicaEn2: "ACUEDUCTO", Tipo: "Tienda", Telefono: "3336486400", Sistema: "SMS_IN", Enlace: "http://ispcw8772/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8772", AplicaEn2: "ACUEDUCTO", Tipo: "Tienda", Telefono: "3336486400", Sistema: "SMS_OUT", Enlace: "http://10.246.64.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8774", AplicaEn2: "PACHUCA", Tipo: "Tienda", Telefono: "7717175700", Sistema: "SMS_IN", Enlace: "http://ispcw8774/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8774", AplicaEn2: "PACHUCA", Tipo: "Tienda", Telefono: "7717175700", Sistema: "SMS_OUT", Enlace: "http://10.246.72.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8775", AplicaEn2: "ENSENADA", Tipo: "Tienda", Telefono: "6461522300", Sistema: "SMS_IN", Enlace: "http://ispcw8775/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8775", AplicaEn2: "ENSENADA", Tipo: "Tienda", Telefono: "6461522300", Sistema: "SMS_OUT", Enlace: "http://10.246.76.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8776", AplicaEn2: "VERACRUZ", Tipo: "Tienda", Telefono: "2299236900", Sistema: "SMS_IN", Enlace: "http://ispcw8776/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8776", AplicaEn2: "VERACRUZ", Tipo: "Tienda", Telefono: "2299236900", Sistema: "SMS_OUT", Enlace: "http://10.246.80.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8777", AplicaEn2: "IRAPUATO", Tipo: "Tienda", Telefono: "4626358600", Sistema: "SMS_IN", Enlace: "http://ispcw8777/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8777", AplicaEn2: "IRAPUATO", Tipo: "Tienda", Telefono: "4626358600", Sistema: "SMS_OUT", Enlace: "http://10.246.84.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8778", AplicaEn2: "CELAYA", Tipo: "Tienda", Telefono: "4615987300", Sistema: "SMS_IN", Enlace: "http://ispcw8778/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8778", AplicaEn2: "CELAYA", Tipo: "Tienda", Telefono: "4615987300", Sistema: "SMS_OUT", Enlace: "http://10.246.88.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8781", AplicaEn2: "TUXTLA GUTI", Tipo: "Tienda", Telefono: "9616171200", Sistema: "SMS_IN", Enlace: "http://ispcw8781/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8781", AplicaEn2: "TUXTLA GUTI", Tipo: "Tienda", Telefono: "9616171200", Sistema: "SMS_OUT", Enlace: "http://10.246.100.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8784", AplicaEn2: "MAZATLAN", Tipo: "Tienda", Telefono: "6699899900", Sistema: "SMS_IN", Enlace: "http://ispcw8784/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8784", AplicaEn2: "MAZATLAN", Tipo: "Tienda", Telefono: "6699899900", Sistema: "SMS_OUT", Enlace: "http://10.246.112.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8785", AplicaEn2: "PUERTO VALL", Tipo: "Tienda", Telefono: "3222265500", Sistema: "SMS_IN", Enlace: "http://ispcw8785/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8785", AplicaEn2: "PUERTO VALL", Tipo: "Tienda", Telefono: "3222265500", Sistema: "SMS_OUT", Enlace: "http://10.246.116.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8788", AplicaEn2: "METEPEC", Tipo: "Tienda", Telefono: "7222757100", Sistema: "SMS_IN", Enlace: "http://ispcw8788/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8788", AplicaEn2: "METEPEC", Tipo: "Tienda", Telefono: "7222757100", Sistema: "SMS_OUT", Enlace: "http://10.246.128.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8789", AplicaEn2: "MIGUEL ALEM", Tipo: "Tienda", Telefono: "8181310900", Sistema: "SMS_IN", Enlace: "http://ispcw8789/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8789", AplicaEn2: "MIGUEL ALEM", Tipo: "Tienda", Telefono: "8181310900", Sistema: "SMS_OUT", Enlace: "http://10.246.132.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8793", AplicaEn2: "POZA RICA", Tipo: "Tienda", Telefono: "7828261500", Sistema: "SMS_IN", Enlace: "http://ispcw8793/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8793", AplicaEn2: "POZA RICA", Tipo: "Tienda", Telefono: "7828261500", Sistema: "SMS_OUT", Enlace: "http://10.246.148.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8795", AplicaEn2: "CAN-CUN REL", Tipo: "Tienda", Telefono: "9981933700", Sistema: "SMS_IN", Enlace: "http://ispcw8795/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8795", AplicaEn2: "CAN-CUN REL", Tipo: "Tienda", Telefono: "9981933700", Sistema: "SMS_OUT", Enlace: "http://10.246.156.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8796", AplicaEn2: "NUEVO LAREDO", Tipo: "Tienda", Telefono: "8677116300", Sistema: "SMS_IN", Enlace: "http://ispcw8796/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8796", AplicaEn2: "NUEVO LAREDO", Tipo: "Tienda", Telefono: "8677116300", Sistema: "SMS_OUT", Enlace: "http://10.246.160.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8797", AplicaEn2: "SALTILLO II LA NOGALERA", Tipo: "Tienda", Telefono: "8444119100", Sistema: "SMS_IN", Enlace: "http://ispcw8797/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8797", AplicaEn2: "SALTILLO II LA NOGALERA", Tipo: "Tienda", Telefono: "8444119100", Sistema: "SMS_OUT", Enlace: "http://10.246.164.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8798", AplicaEn2: "TEXCOCO", Tipo: "Tienda", Telefono: "5959520600", Sistema: "SMS_IN", Enlace: "http://ispcw8798/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8798", AplicaEn2: "TEXCOCO", Tipo: "Tienda", Telefono: "5959520600", Sistema: "SMS_OUT", Enlace: "http://10.246.168.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8799", AplicaEn2: "MDC MX (ATITALAQUIA)", Tipo: "MDC", Telefono: "7787379500", Sistema: "SMS_IN", Enlace: "http://ispcw8799/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8799", AplicaEn2: "MDC MX (ATITALAQUIA)", Tipo: "MDC", Telefono: "7787379500", Sistema: "SMS_OUT", Enlace: "http://10.246.172.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8799", AplicaEn2: "MDC MX (ATITALAQUIA)", Tipo: "MDC", Telefono: "7787379500", Sistema: "Manhattan", Enlace: "http://10.21.68.87//wmweb/login.asp"},
+{ AplicaEn1: "8852", AplicaEn2: "COLIMA", Tipo: "Tienda", Telefono: "3123164100", Sistema: "SMS_IN", Enlace: "http://ispcw8852/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8852", AplicaEn2: "COLIMA", Tipo: "Tienda", Telefono: "3123164100", Sistema: "SMS_OUT", Enlace: "http://10.247.8.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8854", AplicaEn2: "TIJUANA", Tipo: "Tienda", Telefono: "6649691000", Sistema: "SMS_IN", Enlace: "http://ispcw8854/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8854", AplicaEn2: "TIJUANA", Tipo: "Tienda", Telefono: "6649691000", Sistema: "SMS_OUT", Enlace: "http://10.247.16.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8857", AplicaEn2: "ACAPULCO DIAMANTE", Tipo: "Tienda", Telefono: "7444356200", Sistema: "SMS_IN", Enlace: "http://ispcw8857/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8857", AplicaEn2: "ACAPULCO DIAMANTE", Tipo: "Tienda", Telefono: "7444356200", Sistema: "SMS_OUT", Enlace: "http://10.247.64.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+{ AplicaEn1: "8860", AplicaEn2: "CENTRO", Tipo: "Tienda", Telefono: "5550361100", Sistema: "SMS_IN", Enlace: "http://ispcw8860/sms/(S(4d52yr1xslt5sdk50inollbf))/Account/Login?ReturnUrl=%2Fsms%2F#/"},
+{ AplicaEn1: "8860", AplicaEn2: "CENTRO", Tipo: "Tienda", Telefono: "5550361100", Sistema: "SMS_OUT", Enlace: "http://10.247.24.96/sms/(S(vuepvd3tfqu5d450gxguq41b))/Account/Login#/"},
+]
+
+
+        const searchForm = document.getElementById('search-form');
+    const searchInput = document.getElementById('search-input');
+    const resultsContainer = document.getElementById('results-container');
+    const tableWrapper = document.querySelector('.table-wrapper');
+    const suggestionsContainer = document.getElementById('suggestions-container');
+    const MAX_SUGGESTIONS = 5;
+
+    // --- Funciones para manejar la lógica de búsqueda ---
+    function performSearch(term) {
+        saveSearch(term);
+        const filteredResults = pcsData.filter(pc => {
+            return Object.values(pc).some(value =>
+                String(value).toLowerCase().includes(term.toLowerCase())
+            );
+        });
+        renderTable(filteredResults);
+        hideSuggestions();
+    }
+
+    function renderTable(data) {
+        if (data.length === 0) {
+            tableWrapper.innerHTML = '<p class="no-results">No se encontraron resultados.</p>';
+            return;
+        }
+
+    let tableHTML = '<table>';
+    tableHTML += '<thead><tr>';
+    tableHTML += '<th>Aplica en</th>';
+    tableHTML += '<th>Aplica en</th>';
+    tableHTML += '<th>Tipo</th>';
+    tableHTML += '<th>Teléfono</th>';
+    tableHTML += '<th>Sistema</th>';
+    tableHTML += '<th>Enlace</th>';
+    tableHTML += '</tr></thead>';
+
+        tableHTML += '<tbody>';
+        data.forEach(pc => {
+        tableHTML += '<tr>';
+        tableHTML += `<td class="copyable-cell">${pc.AplicaEn1 || 'N/A'}</td>`;
+        tableHTML += `<td class="copyable-cell">${pc.AplicaEn2 || 'N/A'}</td>`;
+        tableHTML += `<td class="copyable-cell">${pc.Tipo || 'N/A'}</td>`;
+        tableHTML += `<td class="copyable-cell">${pc.Telefono || 'N/A'}</td>`;
+        tableHTML += `<td class="copyable-cell">${pc.Sistema || 'N/A'}</td>`;
+        tableHTML += `<td class="copyable-cell">${pc.Enlace || 'N/A'}</td>`;
+        tableHTML += '</tr>';
+        });
+        tableHTML += '</tbody>';
+        tableHTML += '</table>';
+
+        tableWrapper.innerHTML = tableHTML;
+        
+        setupCopyFunctionality();
+    }
+
+// --- FUNCIONALIDAD: COPIAR AL HACER CLIC ---
+function setupCopyFunctionality() {
+  const cells = document.querySelectorAll('.copyable-cell');
+  cells.forEach(cell => {
+    cell.addEventListener('click', (event) => {
+      const textToCopy = event.target.textContent;
+      navigator.clipboard.writeText(textToCopy)
+        .then(() => {
+          // Obtener la posición de la celda
+          const cellRect = event.target.getBoundingClientRect();
+          const feedback = document.createElement('span');
+          
+          // Crear el elemento de feedback
+          feedback.textContent = '...Copiado!';
+          feedback.classList.add('copy-feedback');
+          
+          // Establecer la posición del mensaje al inicio de la celda
+          feedback.style.top = `${cellRect.top + window.scrollY}px`;
+          feedback.style.left = `${cellRect.left + window.scrollX}px`;
+          feedback.style.transform = `translateY(-120%) translateX(0%)`; /* Posición horizontal al inicio de la columna */
+          
+          // Añadir el mensaje al body para que su posición sea relativa a la ventana
+          document.body.appendChild(feedback);
+          
+          setTimeout(() => { feedback.classList.add('show'); }, 10);
+          setTimeout(() => {
+            feedback.classList.remove('show');
+            setTimeout(() => feedback.remove(), 500);
+          }, 1000);
+        })
+        .catch(err => {
+          console.error('No se pudo copiar el texto: ', err);
+        });
+    });
+  });
+}
+
+    // --- FUNCIONALIDAD DE SUGERENCIAS DE BÚSQUEDA ---
+
+    function getRecentSearches() {
+        const searches = localStorage.getItem('recentPcSearches');
+        return searches ? JSON.parse(searches) : [];
+    }
+
+    function saveSearch(searchTerm) {
+        if (!searchTerm || typeof searchTerm !== 'string') return;
+
+        let searches = getRecentSearches();
+        searches = searches.filter(s => s.toLowerCase() !== searchTerm.toLowerCase());
+        searches.unshift(searchTerm);
+        searches = searches.slice(0, MAX_SUGGESTIONS);
+        localStorage.setItem('recentPcSearches', JSON.stringify(searches));
+    }
+
+    function showSuggestions() {
+        const recentSearches = getRecentSearches();
+        suggestionsContainer.innerHTML = '';
+
+        if (recentSearches.length > 0) {
+            recentSearches.forEach(search => {
+                const suggestionItem = document.createElement('div');
+                suggestionItem.classList.add('suggestion-item');
+                suggestionItem.textContent = search;
+                
+                if (suggestionItem.hasAttribute('title')) {
+                    suggestionItem.removeAttribute('title');
+                }
+
+                suggestionItem.addEventListener('mousedown', (event) => {
+                    event.preventDefault();
+                });
+
+                suggestionItem.addEventListener('click', () => {
+                    searchInput.value = search;
+                    hideSuggestions();
+                    performSearch(search);
+                });
+                suggestionsContainer.appendChild(suggestionItem);
+            });
+            suggestionsContainer.style.display = 'block';
+        } else {
+            suggestionsContainer.style.display = 'none';
+        }
+    }
+
+    function hideSuggestions() {
+        suggestionsContainer.style.display = 'none';
+    }
+
+    searchForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const searchTerm = searchInput.value.trim();
+        if (searchTerm) {
+            performSearch(searchTerm);
+        } else {
+            renderTable(pcsData);
+        }
+    });
+
+    searchInput.addEventListener('focus', showSuggestions);
+
+    searchInput.addEventListener('blur', () => {
+        setTimeout(hideSuggestions, 150);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderTable(pcsData);
+    });
+</script>
+
+</body>
+</html>
